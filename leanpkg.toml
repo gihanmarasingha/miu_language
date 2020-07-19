@@ -1,0 +1,8 @@
+[package]
+name = "miu_language"
+version = "0.1"
+lean_version = "leanprover-community/lean:3.17.1"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "3354476387e05ee5a3bad26559282dbcacf558e0"}
