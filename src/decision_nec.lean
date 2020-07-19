@@ -75,6 +75,7 @@ begin
 end
 
 lemma icountIII : icount [I,I,I] = 3 := by constructor
+lemma icountU : icount [U] = 0 := by constructor
 lemma icountUU : icount [U,U] = 0 := by constructor
 
 
@@ -86,7 +87,7 @@ begin
   have k : icount st = 3 + icount en, {
     rw [h1,h2],
     repeat {rw icountappend},
-    rw [icountIII,icountUU],
+    rw [icountIII,icountU],
     ring,
   },
   rw k,

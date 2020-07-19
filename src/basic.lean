@@ -84,7 +84,7 @@ instance string_coe_miustr : has_coe string miustr :=
    
    Rule 1:  xI → xIU
    Rule 2:  Mx → Mxx
-   Rule 3:  xIIIy → xUUy
+   Rule 3:  xIIIy → xUy
    Rule 4:  xUUy → xy
 
 -/
@@ -97,7 +97,7 @@ def rule2 (st : miustr) (en : miustr) : Prop :=
 
 def rule3' (st : miustr) (en : miustr) (n : ℕ) : Prop :=
   st = st.take n ++ [I,I,I] ++ st.drop (n+3)  ∧
-  en = st.take n ++ [U,U] ++ st.drop (n+3)
+  en = st.take n ++ [U] ++ st.drop (n+3)
 
 def rule3 (st : miustr) (en : miustr) : Prop :=
   ∃ (n : ℕ), rule3' st en n
@@ -122,12 +122,12 @@ begin
     constructor
 end
 
-example : rule3' "UIUIIIMMM" "UIUUUMMM" 3 :=
+example : rule3' "UIUIIIMMM" "UIUUMMM" 3 :=
 begin
   split; constructor
 end
 
-example : rule3  "UIUIIIMMM" "UIUUUMMM" :=
+example : rule3  "UIUIIIMMM" "UIUUMMM" :=
 begin
   existsi 3,
   split; constructor
