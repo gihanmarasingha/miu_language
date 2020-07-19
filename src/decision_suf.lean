@@ -41,43 +41,42 @@ end
 
 open nat
 
-lemma four_eq_one_mod_3 : 4 ≡ 1 [MOD 3] := by refl 
 
 lemma mod1pow (x : ℕ) : ∃ m : ℕ, 1 + 3*x ≤ 2^m ∧ 2^m ≡ 1 [MOD 3] :=
 begin
-  induction x with k hk, { /- base case -/
-    use 2,
-      split;
-        norm_num,
-      refl,  /- end of base case-/
-  }, {
-    cases hk with g hk,
-    cases hk with hkg hgmod,
-    by_cases hp : (1 + 3*nat.succ k≤ 2^g),
-      use g,
-      split,
-        exact hp,
-      exact hgmod,
-    use (g+2),
-    split,
-      sorry,
-      /-  Idea - show 1 + 3 * succ k ≤ 2^(g+2) using calc -/
-    have : 2^(g+2) = (2^g)*4,
-      calc 2^((g+1)+1) = (2^(g+1)) *2 : by rw nat.pow_succ
-                   ... = ((2^g)*2)*2 : rfl
-                   ... = (2^g)*4 : by linarith,
-    rw this,
-    have : 2^g * 4 ≡ 2^g * 1 [MOD 3],
-      apply modeq.modeq_mul_left _ four_eq_one_mod_3,
-    rw mul_one at this,
-    transitivity;
-      assumption
+  induction x with k hk, { 
+    use 2, /- base case -/
+    split;
+      norm_num,
+    refl,
+  }, { /- Induction step -/
+    rcases hk with ⟨g, hkg, hgmod⟩, /- Deconstruct the induction hypothesis -/
+    /- The argument splits into two cases now, depending on whether
+    1 + 3(k+1) ≤ 2^g or not. If true, we take the new exponent to be g,
+    else we take it to be g+2. -/
+    by_cases hp : (1 + 3*nat.succ k≤ 2^g), { /- Two possibilities-/   
+      use g, cc,
+    }, {
+      use (g+2),
+      split, {
+        calc 1 + 3*(succ k) = (1 + 3*k) + 3 : by ring
+                        ... ≤ 2^g + 3 : add_le_add_right hkg 3
+                        ... ≤ 2^g + 2^g*3 : by linarith 
+                        ... = 2^g*4 : by ring
+                        ... = 2^g*2^2 : by ring 
+                        ... = 2^(g+2) : by simp [nat.pow_add]
+      }, {
+        calc 2^(g+2) = 2^g*2^2 : by simp [nat.pow_add]
+                 ... = 2^g*4 : by ring
+                 ... ≡ 1*4 [MOD 3] : modeq.modeq_mul_right 4 hgmod
+                 ... ≡ 1*1 [MOD 3] : modeq.modeq_mul_left 1 rfl 
+                 ... ≡ 1 [MOD 3] : by ring 
+      }
+    }
+    
   }
-
-
 end
 
-#check nat.pow
 
 lemma mod2pow (x : ℕ) : ∃ m : ℕ, 2+3*x ≤ 2^m ∧ 2^m % 3 = 2 :=
   sorry
