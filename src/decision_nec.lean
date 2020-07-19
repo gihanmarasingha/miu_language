@@ -1,3 +1,10 @@
+/-
+Copyright (c) 2020 Gihan Marasingha. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Gihan Marasingha
+-/
+
+
 
 /- We develop a decision procedure for the MIU language.
   In this file, we derive necessary conditions for a string to be

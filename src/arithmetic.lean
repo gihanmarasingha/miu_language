@@ -1,3 +1,10 @@
+/-
+Copyright (c) 2020 Gihan Marasingha. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Gihan Marasingha
+-/
+
+
 /- Some basic arithmetic results needed for the MIU proof. 
    Probably amenable to significant refactoring! -/
 

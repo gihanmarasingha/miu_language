@@ -1,4 +1,11 @@
 /-
+Copyright (c) 2020 Gihan Marasingha. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Gihan Marasingha
+-/
+
+
+/-
 
 We give a sufficient condition for a string to be derivable in the MIU
 language.
@@ -56,7 +63,7 @@ by simp [repeat_add, mul_two]
 -/
 
 
-lemma pow2str (n : ℕ) : derivable (M::(repeat I (nat.pow 2 n))) :=
+lemma pow2str (n : ℕ) : derivable (M::(repeat I (pow 2 n))) :=
 begin
   induction n with k hk, {
     constructor, /- base case -/
@@ -78,7 +85,8 @@ end
   we need to show that can derive a string Mw where w consists only of 'I's,
   where d = icount w is a power of 2, where d ≥ c and where d ≡ c (mod 3).
 
-  These results are in the file arithmetic.lean.
+  Given the above lemmas, the desired result concenrs only arithmetic.
+  The desired arithmetic result is given in the file arithmetic.lean.
 -/
 
 /-
@@ -132,10 +140,14 @@ begin
 end
 
 
-/-
 lemma i_freedom (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
-  sorry 
--/
+begin
+  have hd : ∃ d : ℕ, c ≤ (pow 2 d) ∧ (pow 2 d) % 3 = c % 3
+    := mod12pow c h,
+  rcases hd with ⟨d, hd⟩,
+  have hw : derivable (M::(repeat I (pow 2 d))) := pow2str d,
+  sorry
+end
 
 end miu
