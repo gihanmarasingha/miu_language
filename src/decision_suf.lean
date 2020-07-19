@@ -62,15 +62,13 @@ begin
         calc 1 + 3*(succ k) = (1 + 3*k) + 3 : by ring
                         ... ≤ 2^g + 3 : add_le_add_right hkg 3
                         ... ≤ 2^g + 2^g*3 : by linarith 
-                        ... = 2^g*4 : by ring
                         ... = 2^g*2^2 : by ring 
                         ... = 2^(g+2) : by simp [nat.pow_add]
       }, {
         calc 2^(g+2) = 2^g*2^2 : by simp [nat.pow_add]
                  ... = 2^g*4 : by ring
-                 ... ≡ 1*4 [MOD 3] : modeq.modeq_mul_right 4 hgmod
-                 ... ≡ 1*1 [MOD 3] : modeq.modeq_mul_left 1 rfl 
-                 ... ≡ 1 [MOD 3] : by ring 
+                 ... ≡ 1*1 [MOD 3] : modeq.modeq_mul hgmod rfl
+                 ... ≡ 1 [MOD 3] : rfl 
       }
     }
     
