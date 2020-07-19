@@ -17,27 +17,27 @@ open list
 /- An auxiliary result -/
 
 lemma doublerep (m : ℕ) : repeat I m ++ repeat I m = repeat I (m*2) :=
-begin
-  rw ←repeat_add,
-  have h : m + m = m*2,
-    linarith,
-  rw h
-end
+by simp [repeat_add, mul_two]
 
 /- We show we can derive a string M::xs where xs is just 2^n copies of I -/
 
-lemma pow2str (n : ℕ) : derivable (M::(repeat I (nat.pow 2 n))) :=
+
+lemma pow2str (n : ℕ)  : derivable (M::(repeat I (nat.pow 2 n))) :=
 begin
-  induction n with k hk,
+  induction n with k hk, {
     constructor, /- base case -/
-  apply derivable.r2,
-  exact hk,
-  constructor,
-    split,
-      refl,
-  rw doublerep,
-  refl,
+  }, { /- Start of induction step -/
+    apply derivable.r2, { /- We'll use rule 2 -/
+      exact hk, /- hk : M followed by 2^k I's is derivable -/
+    }, {
+      constructor, /- decompose the disjunction -/
+      rw doublerep, /- Replace two identical I strings with one twice as long -/
+      split; 
+        refl,
+    }
+  }
 end
+
 
 open nat
 
