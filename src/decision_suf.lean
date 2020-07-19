@@ -100,7 +100,7 @@ begin
       use g, cc,
     }, { /- The tricky case is when 2^g < 1 + 3(k+1) -/
       use (g+2), /- We take g+2 for the new exponent and show ... -/
-      split,{ /- ... the two desired properties. -/
+      split, { /- ... the two desired properties. -/
         calc 1 + 3*(succ k) = (1 + 3*k) + 3 : by ring
                         ... ≤ 2^g + 3 : add_le_add_right hkg 3
                         ... ≤ 2^g + 2^g*3 : by linarith 
@@ -135,7 +135,7 @@ begin
       use g, cc,
     }, { /- The tricky case is when 2^g < 1 + 3(k+1) -/
       use (g+2), /- We take g+2 for the new exponent and show ... -/
-      split,{ /- ... the two desired properties. -/
+      split, { /- ... the two desired properties. -/
         calc 2 + 3*(succ k) = (2 + 3*k) + 3 : by ring
                         ... ≤ 2^g + 3 : add_le_add_right hkg 3
                         ... ≤ 2^g + 2^g*3 : by linarith 
@@ -174,78 +174,47 @@ end
   t is a string consisting of an even number of 'U's and z is any string.
 -/
 
+/-
+  Before that, we prove that we can remove "UU" from the end of a derivable
+  string to produce another derivable string.
+-/
+
+/- First some auxiliary lemmas related to rule4' -/
+
+lemma take_lenUU (z : miustr) : take (length z) (z ++ [U,U]) = z := by simp
+
+lemma drop_lenUU (z : miustr) : drop (length z + 2) (z ++ [U,U]) = [] :=
+begin
+  induction z with _ _ hsx,
+    simp, /- base case -/
+    apply hsx, /- inductive step -/
+end
+
 lemma removeUUat_end (z : miustr) (h : derivable (z ++ [U,U])) :
   derivable z :=
 begin
   apply derivable.r4,
   exact h,
-  constructor, constructor,
-  induction z with s sx hsx, { /- base case leads to a contradiction. -/
-    have : ∃ ys : miustr, [U,U] = (M::ys) ∧ ¬(M ∈ ys),
-      exact goodmder [U,U] h, 
-    cases this with ys hys,
-    cc,
-  }, { /- Inducton step. -/
-    sorry
-  },
-  sorry,
-  sorry 
+  constructor, /- Decompose disjunction in rule4 -/
+  swap,
+  exact (length z),
+  rw rule4',
+  simp [take_lenUU,drop_lenUU],
 end
-
 
 lemma remove_UUs (z : miustr) (m : ℕ) (h : derivable (z ++ repeat U (m*2)))
   : derivable z :=
 begin
-  induction m with k hk, {
-    have : z ++ repeat U (0*2) = z, 
-      calc z ++ repeat U (0*2) = z ++ [] : rfl
-                           ... = z : append_nil z,
-    rw this at h,
-    exact h,
-  }, {
+  induction m with k hk, { /- base case for induction on m -/
+    revert h,
+    simp [list.repeat],
+  }, { /- inductive step -/
     apply hk,
-    have : z ++ repeat U ((succ k)*2) = (z ++ repeat U (k*2)) ++ [U,U],
-      sorry,
     apply removeUUat_end,
-    rw ←this,
-    exact h,
+    revert h,
+    simp [succ_mul,repeat_add],
   }
 end
-
-
-/-
-
-lemma remove_UUs (z : miustr) (m : ℕ) (h : derivable (z ++ repeat U (m*2)))
-  : derivable z :=
-begin
-  induction m with k hk, {
-    have : z ++ repeat U (0*2) = z, 
-      calc z ++ repeat U (0*2) = z ++ [] : rfl
-                           ... = z : append_nil z,
-    rw this at h,
-    exact h,
-  }, {
-    apply hk,
-    have : z ++ repeat U ((succ k)*2) = z ++ (repeat U (k*2)) ++ [U,U],
-      sorry,
-    rw this at h,
-    apply derivable.r4,
-    exact h,
-    constructor,
-      swap,
-      exact (length z + k*2),
-    constructor,
-    induction z with s hs, {
-      rw nil_append,
-      sorry 
-    }, {
-      sorry
-    }
-      
-  }
-end
-
--/
 
 
 /-
