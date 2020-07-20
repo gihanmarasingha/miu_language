@@ -46,7 +46,7 @@ by simp [repeat_add, mul_two]
 -/
 
 
-lemma pow2str (n : ℕ) : derivable (M::(repeat I (pow 2 n))) :=
+lemma pow2str (n : ℕ) : derivable (M::(repeat I (2^n))) :=
 begin
   induction n with k hk, {
     constructor, /- base case -/
@@ -125,46 +125,45 @@ lemma i_to_u (c d : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2) (hcd : c ≡ d [MOD 3])
     derivable (M::(repeat I c ++ repeat U ((d-c)/3)) ++ xs) :=
   sorry
 
+lemma add_mod2 (a : ℕ) : ∃ t, a + a % 2 = t*2 :=
+begin
+  sorry
+end
 
 lemma make_even (y : ℕ) : ∃ q, ∃ t, (y + q = t*2 ∧ 
    repeat U (t*2) = (repeat U y ++ repeat U q) ) := sorry
 
-example (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
-  derivable (M::(repeat I c)) :=
-begin
-  have hm : ∃ m : ℕ, c ≤ (pow 2 m) ∧ (pow 2 m) % 3 = c % 3
-    := mod12pow c h,
-  rcases hm with ⟨m, hm⟩,
-  have hw : derivable (M::(repeat I (pow 2 m))) := pow2str m,
-  have : ∃ t, derivable ((M::repeat I c) ++ repeat U (t*2)), {
-    cases make_even ( (pow 2 m - c)/3) with q hq,
-      constructor, {
-        rcases hq with ⟨t,ht,hp⟩,
-        sorry,
-      }, {
-        sorry
-      }
-  }, {
-    cases this with t hp,
-    apply remove_UUs,
-    exact hp,
-  }
-end
 
-lemma i_freedom (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
+lemma i_freedom  (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
 begin
-  have hm : ∃ m : ℕ, c ≤ (pow 2 m) ∧ (pow 2 m) % 3 = c % 3
+  /- We start by showing that string Mw described in the introduction can be derived. First derive m, where 2^m is the number of 'I's in this string. -/
+  have hm : ∃ m : ℕ, c ≤ (2^m) ∧ (2^m) % 3 = c % 3
     := mod12pow c h,
-  rcases hm with ⟨m, hm⟩,
-  have hw : derivable (M::(repeat I (pow 2 m))) := pow2str m,
-  have : ∃ t, derivable ((M::repeat I c) ++ repeat U (t*2)), {
-    sorry,
-  }, {
-    cases this with t hp,
-    apply remove_UUs,
-    exact hp,
-  }
+  cases hm with m hm,
+  /- Now derive the string Mw. -/
+  have hw : derivable (M::(repeat I (2^m))) := pow2str m,
+  have hw₂ : derivable (M::(repeat I (2^m)) ++ repeat U ((2^m -c)/3 % 2)),
+    cases mod_two_eq_zero_or_one ((2^m -c)/3) with h_zero h_one, {
+      rw h_zero,  /- Case where (2^m - c)/3 ≡ 0 [MOD 2]-/
+      simp [hw] }, 
+      rw h_one,  /- Case where (2^m - c)/3 ≡ 1 [MOD 2]-/
+      apply derivable.r1,
+      exact hw,
+      simp [rule1], /- Finished proof of hw₂ -/
+  have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++
+    repeat U ((2^m-c)/3 % 2)),
+    apply i_to_u,
+      exact h, /- c is 1 or 2 (mod 3) -/
+      apply (hm.2).symm, /- c ≡ 2^m (mod 3) -/
+      exact hw₂,
+  have : repeat U ((2^m-c)/3) ++ repeat U ((2^m-c)/3 % 2) = repeat U ((2^m-c)/3 + (2^m -c)/3  % 2),
+    simp [repeat_add],
+  simp [this] at hw₃,
+  cases add_mod2 ((2^m-c)/3) with t ht,
+  rw [ht,←cons_append] at hw₃,
+  revert hw₃,
+  apply remove_UUs,
 end
 
 end miu
