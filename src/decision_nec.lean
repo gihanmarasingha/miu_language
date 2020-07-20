@@ -234,7 +234,7 @@ We need some auxiliary lemmata
 
 open list
 
-lemma m_in_drop (n : ℕ) (ys : miustr) (h : M ∈ drop n ys) :
+private lemma m_in_drop (n : ℕ) (ys : miustr) (h : M ∈ drop n ys) :
   M ∈ ys :=
 begin
   revert ys,
@@ -253,7 +253,7 @@ begin
 end
 
 
-lemma m_in_take (n : ℕ) (ys : miustr) (h : M ∈ take n ys) :
+private lemma m_in_take (n : ℕ) (ys : miustr) (h : M ∈ take n ys) :
   M ∈ ys :=
 begin
   revert ys,

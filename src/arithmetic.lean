@@ -13,7 +13,7 @@ import tactic.linarith
 
 open nat
 
-lemma mod1pow (x : ℕ) : ∃ m : ℕ, 1 + 3*x ≤ 2^m ∧ 2^m ≡ 1 [MOD 3] :=
+private lemma mod1pow (x : ℕ) : ∃ m : ℕ, 1 + 3*x ≤ 2^m ∧ 2^m ≡ 1 [MOD 3] :=
 begin
   induction x with k hk, { 
     use 2, /- base case -/
@@ -48,7 +48,7 @@ end
 /- The next lemma is a minor variant of the above. Maybe there's a
 clever way to avoid repeating essentially the same proof. -/
 
-lemma mod2pow (x : ℕ) : ∃ m : ℕ, 2+3*x ≤ 2^m ∧ 2^m ≡ 2 [MOD 3]  :=
+private lemma mod2pow (x : ℕ) : ∃ m : ℕ, 2+3*x ≤ 2^m ∧ 2^m ≡ 2 [MOD 3]  :=
 begin
   induction x with k hk, { 
     use 3, /- base case -/
