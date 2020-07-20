@@ -7,37 +7,21 @@ Authors: Gihan Marasingha
 
 /-
 
-We give a sufficient condition for a string to be derivable in the MIU
-language.
+We give a sufficient condition for a string to be derivable in the MIU language.
 
-Let icount x and ucount x denote the number of 'I's (respectively
-'U's) in the MIU string x.
+Let icount x and ucount x denote the number of 'I's (respectively 'U's) in the MIU string x.
 
-We'll show that an MIU string is derivable if it has the
-form Mx where x is a string of 'I's and 'U's where icount x is
-congruent to 1 or 2 modulo 3.
+We'll show that an MIU string is derivable if it has the form Mx where x is a string of 'I's and 'U's where icount x is congruent to 1 or 2 modulo 3.
 
-To prove this, it suffices to be able to show that one can derive an MIU
-string My where y is a string consisting only of 'I's and where the number
-of 'I's in y is a+3b where a = icount x and b = ucount x. This suffices because Rule 3
-permits us to change any string of three consecutive 'I's into a 'U'.
+To prove this, it suffices to be able to show that one can derive an MIU string My where y is a string consisting only of 'I's and where the number of 'I's in y is a+3b where a = icount x and b = ucount x. This suffices because Rule 3 permits us to change any string of three consecutive 'I's into a 'U'.
 
-Note icount y = (icount x) + 3(ucount x) ≡ icount x (mod 3). Thus, it suffices to
-show we can generate any string Mz where z is a string of 'I's such that 
-icount z is congruent to 1 or 2 modulo 3.
+Note icount y = (icount x) + 3(ucount x) ≡ icount x (mod 3). Thus, it suffices to show we can generate any string Mz where z is a string of 'I's such that icount z is congruent to 1 or 2 modulo 3.
 
 Let z be such a string and let c denote icount z, so c ≡ 1 or 2 (mod 3).
-To derive such a string, it suffices to derive a string Mw, where again w is a string of
-only 'I's with the additional conditions that icount w is a power of 2, that 
-icount w ≥ c and that icount w ≡ c (mod 3).
+To derive such a string, it suffices to derive a string Mw, where again w is a string of only 'I's with the additional conditions that icount w is a power of 2, that icount w ≥ c and that icount w ≡ c (mod 3).
 
-To see that this suffices, note that we can remove triples of 'I's from the end of Mw,
-creating 'U's as we go along. Once the number of 'I's equals m, we just remove 'U's two
-at a time until we have no 'U's. The only issue is that we may not have an even number of
-'U's! Writing d = icount w, we see that this happens if and only if (d-c)/3 is odd.
-To forestal this eventuality, we apply Rule 1 to z in this case, prior to removing triples
-of 'I's. By applying Rule 1, we add an additional 'U' so the final number of 'U's will
-be even.
+To see that this suffices, note that we can remove triples of 'I's from the end of Mw, creating 'U's as we go along. Once the number of 'I's equals m, we just remove 'U's two at a time until we have no 'U's. The only issue is that we may not have an even number of 'U's! Writing d = icount w, we see that this happens if and only if (d-c)/3 is odd.
+To forestall this eventuality, we apply Rule 1 to z in this case, prior to removing triples of 'I's. By applying Rule 1, we add an additional 'U' so the final number of 'U's will be even.
 
 -/
 
@@ -58,8 +42,7 @@ by simp [repeat_add, mul_two]
 
 
 /-
-  We start by showing that a string Mw can be created, where w consists only of 'I's
-  and such that icount w is a power of 2.
+  We start by showing that a string Mw can be created, where w consists only of 'I's and such that icount w is a power of 2.
 -/
 
 
@@ -81,25 +64,19 @@ end
 
 
 /-
-  We need a more precise result. For any given natural number c ≡ 1 or 2 (mod 3), 
-  we need to show that can derive a string Mw where w consists only of 'I's,
-  where d = icount w is a power of 2, where d ≥ c and where d ≡ c (mod 3).
+  We need a more precise result. For any given natural number c ≡ 1 or 2 (mod 3), we need to show that can derive a string Mw where w consists only of 'I's,  where d = icount w is a power of 2, where d ≥ c and where d ≡ c (mod 3).
 
-  Given the above lemmas, the desired result concenrs only arithmetic.
-  The desired arithmetic result is given in the file arithmetic.lean.
+  Given the above lemmas, the desired result reduces to an arithmetic result, given in the file arithmetic.lean.
 -/
 
 /-
-  We'll use this result to show we can derive a string of the form Mz
-  where z is a string consisting only of 'I's such that icount z ≡ 1 or 2 (mod 3).
+  We'll use this result to show we can derive a string of the form Mz where z is a string consisting only of 'I's such that icount z ≡ 1 or 2 (mod 3).
 
-  As an intermediate step, we show that derive z from zt, where
-  t is a string consisting of an even number of 'U's and z is any string.
+  As an intermediate step, we show that derive z from zt, where t is a string consisting of an even number of 'U's and z is any string.
 -/
 
 /-
-  Before that, we prove that we can remove "UU" from the end of a derivable
-  string to produce another derivable string.
+  Before that, we prove that we can remove "UU" from the end of a derivable string to produce another derivable string.
 -/
 
 /- First some auxiliary lemmas related to rule4' -/
@@ -139,15 +116,55 @@ begin
   }
 end
 
+/- 
+  In application of the following lemma, xs will either be [] or [U].
+-/
+
+lemma i_to_u (c d : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2) (hcd : c ≡ d [MOD 3]) 
+  (xs : miustr) (hder : derivable (M ::(repeat I d) ++ xs)) :
+    derivable (M::(repeat I c ++ repeat U ((d-c)/3)) ++ xs) :=
+  sorry
+
+
+lemma make_even (y : ℕ) : ∃ q, ∃ t, (y + q = t*2 ∧ 
+   repeat U (t*2) = (repeat U y ++ repeat U q) ) := sorry
+
+example (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
+  derivable (M::(repeat I c)) :=
+begin
+  have hm : ∃ m : ℕ, c ≤ (pow 2 m) ∧ (pow 2 m) % 3 = c % 3
+    := mod12pow c h,
+  rcases hm with ⟨m, hm⟩,
+  have hw : derivable (M::(repeat I (pow 2 m))) := pow2str m,
+  have : ∃ t, derivable ((M::repeat I c) ++ repeat U (t*2)), {
+    cases make_even ( (pow 2 m - c)/3) with q hq,
+      constructor, {
+        rcases hq with ⟨t,ht,hp⟩,
+        sorry,
+      }, {
+        sorry
+      }
+  }, {
+    cases this with t hp,
+    apply remove_UUs,
+    exact hp,
+  }
+end
 
 lemma i_freedom (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
 begin
-  have hd : ∃ d : ℕ, c ≤ (pow 2 d) ∧ (pow 2 d) % 3 = c % 3
+  have hm : ∃ m : ℕ, c ≤ (pow 2 m) ∧ (pow 2 m) % 3 = c % 3
     := mod12pow c h,
-  rcases hd with ⟨d, hd⟩,
-  have hw : derivable (M::(repeat I (pow 2 d))) := pow2str d,
-  sorry
+  rcases hm with ⟨m, hm⟩,
+  have hw : derivable (M::(repeat I (pow 2 m))) := pow2str m,
+  have : ∃ t, derivable ((M::repeat I c) ++ repeat U (t*2)), {
+    sorry,
+  }, {
+    cases this with t hp,
+    apply remove_UUs,
+    exact hp,
+  }
 end
 
 end miu
