@@ -120,19 +120,25 @@ end
   In application of the following lemma, xs will either be [] or [U].
 -/
 
+
 lemma i_to_u (c d : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2) (hcd : c ≡ d [MOD 3]) 
   (xs : miustr) (hder : derivable (M ::(repeat I d) ++ xs)) :
     derivable (M::(repeat I c ++ repeat U ((d-c)/3)) ++ xs) :=
   sorry
 
+/- Heavy use of library_search helped with the following proof :) -/
 lemma add_mod2 (a : ℕ) : ∃ t, a + a % 2 = t*2 :=
-begin
-  sorry
+begin 
+  suffices :  ∃ t, a + a % 2 = 2*t, {
+    cases this with t ht,
+    rw mul_comm at ht,
+    use t, exact ht
+  },
+  have : (a + a%2) % 2 = 0,
+    rw [add_mod,mod_mod,←two_mul,mul_mod_right],
+  apply dvd_of_mod_eq_zero,
+  rw this,
 end
-
-lemma make_even (y : ℕ) : ∃ q, ∃ t, (y + q = t*2 ∧ 
-   repeat U (t*2) = (repeat U y ++ repeat U q) ) := sorry
-
 
 lemma i_freedom  (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
