@@ -116,9 +116,7 @@ begin
   }
 end
 
-/- More minor results. -/
-
-lemma take_lenIII (z w : miustr) : take (length z) (z ++ [I,I,I] ++ w) = z := by simp
+/- A minor result. -/
 
 lemma drop_lenIII (z w : miustr) : drop (length z + 3) (z ++ [I,I,I] ++ w) = w :=
 begin
@@ -131,7 +129,16 @@ end
 
 lemma three_i_to_one_u {as bs : miustr} (h : derivable (as ++ [I,I,I] ++ bs))  : derivable (as ++ [U] ++ bs) :=
 begin
-sorry 
+  apply derivable.r3,
+  exact h,
+  unfold rule3,
+  use (length as),
+  have h₁ :(take (length as) (as ++ [I, I, I] ++ bs)) = as :=
+    by simp,
+  have h₂ : (drop (length as + 3) (as ++ [I, I, I] ++ bs)) = bs:=
+    drop_lenIII as bs,
+  constructor;
+  rw [h₁,h₂],
 end
 
 
