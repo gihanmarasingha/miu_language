@@ -116,10 +116,15 @@ begin
   }
 end
 
+/- An important auxliary result: -/
+
+lemma three_i_to_one_u {as bs : miustr} (h : derivable (as ++ [I,I,I] ++ bs))  : derivable (as ++ [U] ++ bs) :=
+  sorry
+
+
 /- 
   In application of the following lemma, xs will either be [] or [U].
 -/
-
 
 /- The following may be easier to prove if we express d as c + 3k -/
 lemma i_to_u (c d : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2) (hcd : c ≡ d [MOD 3]) 
@@ -133,11 +138,28 @@ lemma i_to_u2 (c k : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2)
   (xs : miustr) (hder : derivable (M ::(repeat I (c+3*k)) ++ xs)) :
     derivable (M::(repeat I c ++ repeat U k) ++ xs) :=
 begin
+  revert xs,
   induction k with a ha, {
-    revert hder,
     simp,
   }, {
-    sorry 
+    intro xs,
+    specialize ha ([U]++xs),
+    have h₃ : repeat U a ++ [U] = repeat U (a.succ),
+    calc repeat U a ++ [U] = repeat U a ++ repeat U 1 : rfl
+                       ... = repeat U (a + 1) : by simp [repeat_add],
+    have h₄ : M ::(repeat I c ++ repeat U a) ++ ([U] ++ xs) = M:: repeat I c ++ (repeat U a ++ [U]) ++ xs,
+      simp,
+    rw [h₄,h₃,←append_assoc] at ha,
+    intro h,
+    have h₂ : M:: repeat I (c + 3*a.succ) = M :: repeat I (c + 3*a) ++ [I,I,I] ,
+      calc M:: repeat I (c + 3*a.succ)  
+         = M :: repeat I (c + 3*a + 3) : by simp [mul_succ,add_assoc]
+     ... = M :: repeat I (c + 3*a) ++ repeat I 3 : by simp [repeat_add]
+     ... = M :: repeat I (c + 3*a) ++ [I,I,I]: rfl,
+    rw h₂ at h,
+    have : derivable (M:: repeat I (c + 3*a) ++ [U] ++ xs), 
+      exact three_i_to_one_u h,
+    exact ha this,
   }
 end
 
