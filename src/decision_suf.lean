@@ -211,8 +211,7 @@ begin
       apply derivable.r1,
       exact hw,
       simp [rule1], /- Finished proof of hw₂ -/
-  have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++
-    repeat U ((2^m-c)/3 % 2)),
+  have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++ repeat U ((2^m-c)/3 % 2)),
     apply i_to_u c ((2^m-c)/3),
       exact h, /- c is 1 or 2 (mod 3) -/
       have : c + 3 * ((2^m-c)/3) = 2^m, {
@@ -277,7 +276,6 @@ end
 lemma icount_eq {ys : miustr} (h : icount ys = length ys) :
   ys = repeat I (icount ys) :=
 begin
-
   induction ys with x xs hxs, {
     rw icount,
     simp,
@@ -367,10 +365,36 @@ begin
   cc,
 end
 
+#check list.append
+
+/- The next result is the inductive step of our main theorem.-/
+lemma ind_hyp_suf (k : ℕ) (ys : miustr) (hu : ucount ys = succ k) (hdec : decstr ys) :
+∃ (as bs : miustr), (ys = as ++ [U] ++ bs) ∧ (ucount (as ++ [I,I,I] ++ bs) = k) ∧ decstr (as ++ [I,I,I] ++ bs) :=
+begin
+  sorry
+end
 
 
-theorem miu_suff (en : miustr) (h : decstr en) : derivable en :=
-  sorry 
+theorem miu_suff  (en : miustr) (h : decstr en) : derivable en :=
+begin
+/- The next three lines have the effect of introducing ucount en as a variable that can be used for induction -/
+
+have hu : ∃ n, ucount en = n, 
+  simp,
+cases hu with n hu,
+revert en, /- Crucially, we need the induction hypothesis to quantify over en -/
+induction n with k hk, {
+  apply base_case_suf; assumption
+}, {
+  intros ys hdec hus,
+  /- Idea: apply the induction hypothesis hk in the case where en is the string that arises by replacing the first 'U' in ys with three 'I's. We should be able to deduce decstr en, whence, by the induction hypothesis, derivable en. Applying three_i_to_one_u, we show derivable ys. -/
+  rcases ind_hyp_suf k ys hus hdec with ⟨as,bs,hyab,habuc,hdecab⟩,
+  have h₂ : derivable (as ++ [I,I,I] ++ bs) :=
+    hk (as ++ [I,I,I] ++ bs) hdecab habuc,
+  rw hyab,
+  exact three_i_to_one_u h₂,
+}
+end
 
 
 
