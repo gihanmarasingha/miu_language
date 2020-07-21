@@ -354,6 +354,23 @@ begin
   apply goodmrule4; assumption,
 end
 
+/-
+We put togehter our two conditions to give one condition decstr. Once we've proved sufficiency of this condition, we'll have proved that checking the condition is a decision procedure.
+-/
 
+def decstr (en : miustr) :=
+  goodm en ∧ ((icount en) % 3 = 1 ∨ (icount en) % 3 = 2)
+
+/-
+Combining the previous theorems, we show a derivable string must satsify condition decstr
+-/
+
+theorem dec_nec (en : miustr) :  derivable en → decstr en:=
+begin
+  intro h,
+  split,
+    exact goodmder en h,
+    exact icntder en h
+end
 
 end miu

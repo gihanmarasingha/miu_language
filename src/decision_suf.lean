@@ -189,6 +189,10 @@ begin
   rw this,
 end
 
+/- The next result is significant. It shows we can derive My where y
+is any string consisiting just of 'I's, where icount y is 1 or 2 modulo 3.
+
+-/
 
 lemma i_freedom (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
@@ -225,6 +229,115 @@ begin
   revert hw₃,
   apply remove_UUs,
 end
+
+
+/- The ucount is the number of 'U's in an miustr -/
+
+def ucount : miustr → ℕ
+| [] := 0
+| (U::cs) := 1 + ucount cs
+| (_::cs) := ucount cs
+
+/- We show that icount is additive with respect to append -/
+lemma ucountappend (a b : miustr) :
+  ucount (a ++ b) = ucount a + ucount b :=
+begin
+  induction a with ha hax haxs,
+    simp [ucount],
+    cases ha;
+      simp [ucount, haxs, add_assoc],
+end
+
+
+/- Finally, we have the big result of this project, that the necessary condition decstr (given in another file) for derivability is also sufficient.
+-/
+
+/-
+Our proof will proceed by induction on the ucount of a string. 
+For the base case, we must show that any string en that satifies decstr and has ucount en = 0 must be a string of the form M::(repeat I c), where c is 1 or 2 modulo 3.
+
+-/
+
+
+/-
+We need an auxiliary result: if icount ys = length ys, then ys is a string of I's. We build this via an intermediate result.
+-/
+
+lemma icount_lt (ys : miustr) : icount ys ≤ length ys :=
+begin
+  induction ys with x xs hxs, {
+    simp [icount],
+  }, {
+    cases x;
+      {simp [icount], linarith}
+  }
+end
+
+
+lemma icount_eq (ys : miustr) (h : icount ys = length ys) :
+  ys = repeat I (icount ys) :=
+begin
+
+  induction ys with x xs hxs, {
+    rw icount,
+    simp,
+  } , { 
+    have : icount xs ≤ length xs := icount_lt xs,
+    cases x, { /- case where x = "M" -/
+      rw [icount,length] at h,
+      exfalso,
+      linarith,
+    }, { /- case where x = "I" -/
+      rw h,
+      have : icount xs = xs.length,
+        rw [icount,length,add_comm] at h,
+        exact add_right_cancel h,
+      rw hxs this,
+      simp,
+    }, { /- case where x = "U". same proof as for x = "M" -/
+      rw [icount,length] at h,
+      exfalso,
+      linarith,
+    }
+  }
+end
+
+
+
+
+lemma base_case_suf (en : miustr) (h : decstr en) (hu : ucount en = 0) : derivable en :=
+begin
+  cases h with hm hi, /- hm : goodm en, hi : congruence condition in icount -/
+  rcases hm with ⟨ys, hys, hnm⟩, /- hys : en = M :: ys, hnm :  M ∉ ys -/
+  suffices  : ∃ c, ys = repeat I c ∧ (c % 3 = 1 ∨ c % 3 = 2), {
+    rcases this with ⟨c, hysr, hc⟩,
+    rw [hys, hysr],
+    exact i_freedom c hc,
+  },
+  have hu0 : ucount ys = 0,
+    calc ucount ys = 0 + ucount ys : by rw zero_add
+               ... = ucount [M] + ucount ys : rfl
+               ... = ucount ([M] ++ ys) : by rw ucountappend 
+               ... = ucount en : by simp [hys]
+               ... = 0 : by rw hu,
+  have hiys : icount ys = icount en,
+    calc icount ys = 0 + icount ys : by rw zero_add
+               ... = icount [M] + icount ys : rfl
+               ... = icount ([M] ++ ys) : by rw icountappend
+               ... = icount en : by simp [hys],
+  induction ys with x xs hxs, {
+    rw [←hiys,icount] at hi,
+    cases hi;
+      contradiction,
+  }, {
+    sorry
+  }
+end
+
+
+
+theorem miu_suff (en : miustr) (h : decstr en) : derivable en :=
+  sorry 
 
 
 
