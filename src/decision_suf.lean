@@ -260,10 +260,10 @@ For the base case, we must show that any string en that satifies decstr and has 
 
 
 /-
-We need an auxiliary result: if icount ys = length ys, then ys is a string of I's. We build this via an intermediate result.
+We need auxiliary results: one gives a condition for icount ys ≤ length ys. Two others give conditions for icount ys = length ys.
 -/
 
-lemma icount_lt (ys : miustr) : icount ys ≤ length ys :=
+lemma icount_lt {ys : miustr} : icount ys ≤ length ys :=
 begin
   induction ys with x xs hxs, {
     simp [icount],
@@ -274,7 +274,7 @@ begin
 end
 
 
-lemma icount_eq (ys : miustr) (h : icount ys = length ys) :
+lemma icount_eq {ys : miustr} (h : icount ys = length ys) :
   ys = repeat I (icount ys) :=
 begin
 
@@ -282,7 +282,7 @@ begin
     rw icount,
     simp,
   } , { 
-    have : icount xs ≤ length xs := icount_lt xs,
+    have : icount xs ≤ length xs := icount_lt,
     cases x, { /- case where x = "M" -/
       rw [icount,length] at h,
       exfalso,
@@ -302,8 +302,40 @@ begin
   }
 end
 
+lemma icount_eq_length_of_ucount_zero_and_no_m {ys : miustr} (hu : ucount ys = 0) (hm : M ∉ ys) : icount ys = length ys :=
+begin
+  induction ys with x xs hxs, {
+    simp [icount],
+  }, {
+    cases x, { /- case x = "M" gives a contradiction -/
+      exfalso,
+      have : M ∈ M::xs,
+        simp,
+      exact hm this,
+    }, { /- case x = "I" -/
+      rw [icount,length,add_comm],
+      congr' 1,
+      apply hxs, {
+          rwa ucount at hu,
+      }, {
+        revert hm,
+        simp, 
+      }
+    }, { /- case x = "U" gives a (different) contradiction -/
+      exfalso,
+      rw ucount at hu,
+      linarith,
+    },
+
+  }
+end
 
 
+/-
+
+The following is the base case of the induction of our main theorem.
+
+-/
 
 lemma base_case_suf (en : miustr) (h : decstr en) (hu : ucount en = 0) : derivable en :=
 begin
@@ -320,18 +352,19 @@ begin
                ... = ucount ([M] ++ ys) : by rw ucountappend 
                ... = ucount en : by simp [hys]
                ... = 0 : by rw hu,
-  have hiys : icount ys = icount en,
+  have h₂ : icount ys = icount en,
     calc icount ys = 0 + icount ys : by rw zero_add
                ... = icount [M] + icount ys : rfl
                ... = icount ([M] ++ ys) : by rw icountappend
                ... = icount en : by simp [hys],
-  induction ys with x xs hxs, {
-    rw [←hiys,icount] at hi,
-    cases hi;
-      contradiction,
-  }, {
-    sorry
-  }
+  have h₃ : icount ys = length ys,
+    exact icount_eq_length_of_ucount_zero_and_no_m hu0 hnm,
+  have h₄ : ys = repeat I (icount ys) :=
+    icount_eq h₃,
+  rw h₂ at h₄, /- replace icount ys with icount en in h₄ -/
+  rw h₄,
+  use (icount en),
+  cc,
 end
 
 
