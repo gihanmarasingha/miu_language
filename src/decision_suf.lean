@@ -116,25 +116,29 @@ begin
   }
 end
 
+/- More minor results. -/
+
+lemma take_lenIII (z w : miustr) : take (length z) (z ++ [I,I,I] ++ w) = z := by simp
+
+lemma drop_lenIII (z w : miustr) : drop (length z + 3) (z ++ [I,I,I] ++ w) = w :=
+begin
+  induction z with _ _ hsx,
+    simp, /- base case -/
+    apply hsx, /- inductive step -/
+end
+
 /- An important auxliary result: -/
 
 lemma three_i_to_one_u {as bs : miustr} (h : derivable (as ++ [I,I,I] ++ bs))  : derivable (as ++ [U] ++ bs) :=
-  sorry
+begin
+sorry 
+end
 
 
 /- 
   In application of the following lemma, xs will either be [] or [U].
 -/
-
-/- The following may be easier to prove if we express d as c + 3k -/
-lemma i_to_u (c d : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2) (hcd : c ≡ d [MOD 3]) 
-  (xs : miustr) (hder : derivable (M ::(repeat I d) ++ xs)) :
-    derivable (M::(repeat I c ++ repeat U ((d-c)/3)) ++ xs) :=
-begin
-  sorry  
-end
-
-lemma i_to_u2 (c k : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2)
+lemma i_to_u (c k : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2)
   (xs : miustr) (hder : derivable (M ::(repeat I (c+3*k)) ++ xs)) :
     derivable (M::(repeat I c ++ repeat U k) ++ xs) :=
 begin
@@ -179,7 +183,7 @@ begin
 end
 
 
-lemma i_freedom2  (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
+lemma i_freedom (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
 begin
   /- We start by showing that string Mw described in the introduction can be derived. First derive m, where 2^m is the number of 'I's in this string. -/
@@ -198,7 +202,7 @@ begin
       simp [rule1], /- Finished proof of hw₂ -/
   have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++
     repeat U ((2^m-c)/3 % 2)),
-    apply i_to_u2 c ((2^m-c)/3),
+    apply i_to_u c ((2^m-c)/3),
       exact h, /- c is 1 or 2 (mod 3) -/
       have : c + 3 * ((2^m-c)/3) = 2^m, {
         rw nat.mul_div_cancel',
@@ -215,36 +219,6 @@ begin
   apply remove_UUs,
 end
 
-lemma i_freedom  (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
-  derivable (M::(repeat I c)) :=
-begin
-  /- We start by showing that string Mw described in the introduction can be derived. First derive m, where 2^m is the number of 'I's in this string. -/
-  have hm : ∃ m : ℕ, c ≤ (2^m) ∧ (2^m) % 3 = c % 3
-    := mod12pow c h,
-  cases hm with m hm,
-  /- Now derive the string Mw. -/
-  have hw : derivable (M::(repeat I (2^m))) := pow2str m,
-  have hw₂ : derivable (M::(repeat I (2^m)) ++ repeat U ((2^m -c)/3 % 2)),
-    cases mod_two_eq_zero_or_one ((2^m -c)/3) with h_zero h_one, {
-      rw h_zero,  /- Case where (2^m - c)/3 ≡ 0 [MOD 2]-/
-      simp [hw] }, 
-      rw h_one,  /- Case where (2^m - c)/3 ≡ 1 [MOD 2]-/
-      apply derivable.r1,
-      exact hw,
-      simp [rule1], /- Finished proof of hw₂ -/
-  have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++
-    repeat U ((2^m-c)/3 % 2)),
-    apply i_to_u,
-      exact h, /- c is 1 or 2 (mod 3) -/
-      apply (hm.2).symm, /- c ≡ 2^m (mod 3) -/
-      exact hw₂,
-  have : repeat U ((2^m-c)/3) ++ repeat U ((2^m-c)/3 % 2) = repeat U ((2^m-c)/3 + (2^m -c)/3  % 2),
-    simp [repeat_add],
-  simp [this] at hw₃,
-  cases add_mod2 ((2^m-c)/3) with t ht,
-  rw [ht,←cons_append] at hw₃,
-  revert hw₃,
-  apply remove_UUs,
-end
+
 
 end miu
