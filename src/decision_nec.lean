@@ -355,7 +355,7 @@ begin
 end
 
 /-
-We put togehter our two conditions to give one condition decstr. Once we've proved sufficiency of this condition, we'll have proved that checking the condition is a decision procedure.
+We put togther our two conditions to give one condition decstr. Once we've proved sufficiency of this condition, we'll have proved that checking the condition is a decision procedure.
 -/
 
 def decstr (en : miustr) :=
