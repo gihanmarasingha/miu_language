@@ -97,7 +97,7 @@ instance string_coe_miustr : has_coe string miustr :=
 -/
 
 def rule1 (st : miustr) (en : miustr) : Prop :=
-  en = st ++ [U]
+  (∃ xs, st = xs ++ [I]) ∧ en = st ++ [U]
 
 def rule2 (st : miustr) (en : miustr) : Prop :=
   ∃ xs, (st = M::xs) ∧ (en = M::(xs ++ xs))
@@ -119,8 +119,13 @@ def rule4 (st : miustr) (en : miustr) : Prop :=
 
 /- RULE USAGE EXAMPLES -/
 
-example : rule1 "MI" "MIU" :=
-  by constructor
+private lemma MIUfromMI : rule1 "MI" "MIU" :=
+begin
+  split,
+    use "M",
+    split,
+  split,
+end
 
 example : rule2 "MIIU" "MIIUIIU" :=
 begin
@@ -172,34 +177,20 @@ inductive derivable : miustr → Prop
 
 /- DERIVABILITY EXAMPLES -/
 
-example : derivable "MIU" :=
+private lemma MIU_der : derivable "MIU" :=
 begin
   constructor,
     constructor,
-  constructor
+  exact MIUfromMI,
 end
 
 example : derivable "MIUIU" :=
 begin
-  have h : derivable "MIU",
-    constructor,
-      constructor,
-    constructor,
   apply derivable.r2,
-    exact h,
+    exact MIU_der,
     existsi ([I,U]),
     split;
       constructor
-end
-
-example : derivable "MIUIU" :=
-begin
-  apply derivable.r2,
-    apply derivable.r1;
-      constructor,
-  existsi ([I,U]),
-  split;
-    constructor
 end
 
 end miu
