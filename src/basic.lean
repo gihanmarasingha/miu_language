@@ -23,8 +23,7 @@ SET UP THE NECESSARY DATA TYPES
 namespace miu
 
 
-/- Each MIU string consists of either an M, I, or U. Such an elementary unit
- is called a miu_atom. We represent miu_atom as an enumerated type -/
+/- Each MIU string consists of either an M, I, or U. Such an elementary unit is called a miu_atom. We represent miu_atom as an enumerated type -/
 inductive miu_atom : Type
 | M : miu_atom
 | I : miu_atom
@@ -32,8 +31,7 @@ inductive miu_atom : Type
 
 open miu_atom 
 
-/- We show that the type miu_atom is inhabited, giving M (for no particular
-reason) as the default element. -/
+/- We show that the type miu_atom is inhabited, giving M (for no particular reason) as the default element. -/
 instance miu_atom_inhabited : inhabited miu_atom :=
 inhabited.mk M
 
@@ -160,12 +158,7 @@ end
 /-
   DERIVABILITY
  
-  There is exactly one axiom of MIU, namely that "MI" is derivable.
-  From this, and the rules of inference, we define an type 'derivable' so
-  that 'derivable st' corresonds to the notion that the miutr st is
-  derivable in MIU. We represent 'derivable' as an inductive family.
-
- 
+  There is exactly one axiom of MIU, namely that "MI" is derivable. From this, and the rules of inference, we define an type 'derivable' so that 'derivable st' corresonds to the notion that the miutr st is derivable in MIU. We represent 'derivable' as an inductive family.
  -/
 
 inductive derivable : miustr → Prop

@@ -320,8 +320,7 @@ begin
 end
 
 
-/- The theorem below shows any derivable string must begin with M
-   and contain no M in its tail.
+/- The theorem below shows any derivable string must begin with M and contain no M in its tail.
 -/
 theorem goodmder (en : miustr): derivable en → 
   goodm en:= 
@@ -346,7 +345,7 @@ def decstr (en : miustr) :=
 Combining the previous theorems, we show a derivable string en must satsify condition decstr en.
 -/
 
-theorem dec_nec (en : miustr) :  derivable en → decstr en:=
+theorem dec_nec (en : miustr) : derivable en → decstr en:=
 begin
   intro h,
   split,
@@ -355,3 +354,4 @@ begin
 end
 
 end miu
+ 
