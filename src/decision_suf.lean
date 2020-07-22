@@ -272,8 +272,7 @@ begin
   }
 end
 
-
-lemma icount_eq {ys : miustr} (h : icount ys = length ys) :
+lemma icount_eq  {ys : miustr} (h : icount ys = length ys) :
   ys = repeat I (icount ys) :=
 begin
   induction ys with x xs hxs, {
@@ -281,24 +280,21 @@ begin
     simp,
   } , { 
     have : icount xs ≤ length xs := icount_lt,
-    cases x, { /- case where x = "M" -/
-      rw [icount,length] at h,
-      exfalso,
-      linarith,
-    }, { /- case where x = "I" -/
+    cases x, swap, { -- swap bring case x = I to the fore
       rw h,
       have : icount xs = xs.length,
         rw [icount,length,add_comm] at h,
         exact add_right_cancel h,
       rw hxs this,
       simp,
-    }, { /- case where x = "U". same proof as for x = "M" -/
+    }, repeat  { /- cases where x = M or x = U -/
       rw [icount,length] at h,
       exfalso,
       linarith,
     }
   }
 end
+
 
 lemma icount_eq_length_of_ucount_zero_and_no_m {ys : miustr} (hu : ucount ys = 0) (hm : M ∉ ys) : icount ys = length ys :=
 begin
@@ -365,13 +361,89 @@ begin
   cc,
 end
 
-#check list.append
+
+/- The following result (list.mem_split) from mathlib may be precisely what I need.-/
+
+
+lemma in_of_ucount_eq_succ {xs : miustr} {k : ℕ} (h : ucount xs = succ k) : U ∈ xs :=
+begin
+  induction xs with z zs hzs, {
+    exfalso, rw ucount at h, contradiction, -- base case
+  }, { -- induction step
+    simp [eq_or_ne_mem_of_mem],
+    cases z, repeat { -- deal equally with the cases z = M and z = I
+      rw ucount at h,
+      right,
+      exact hzs h,
+    }, {  -- the case z = U
+      left, refl,
+    }
+  }
+end
+
+lemma split_at_first_U {k : ℕ} {ys : miustr} (hm : goodm ys) (h : ucount ys = succ k) : ∃ (as bs : miustr), (ys = M:: as ++ [U] ++ bs) :=
+begin
+  rcases hm with ⟨xs, hm, _⟩,
+  rw hm,
+  simp [cons_inj], -- it suffices to prove xs = as ++ [U] ++ bs
+  have : ucount ys = ucount xs,
+    rw [hm,ucount],
+  rw this at h,
+  apply mem_split,
+  exact in_of_ucount_eq_succ h,
+end 
 
 /- The next result is the inductive step of our main theorem.-/
 lemma ind_hyp_suf (k : ℕ) (ys : miustr) (hu : ucount ys = succ k) (hdec : decstr ys) :
-∃ (as bs : miustr), (ys = as ++ [U] ++ bs) ∧ (ucount (as ++ [I,I,I] ++ bs) = k) ∧ decstr (as ++ [I,I,I] ++ bs) :=
+∃ (as bs : miustr), (ys = M::as ++ [U] ++ bs) ∧ (ucount (M::as ++ [I,I,I] ++ bs) = k) ∧ decstr (M::as ++ [I,I,I] ++ bs) :=
 begin
-  sorry
+/-   cases hdec with hm hic,
+  rcases hm with ⟨xs, hm, hmne⟩, -/
+  rcases hdec with ⟨hm,hic⟩,
+  rcases split_at_first_U  hm hu with ⟨as,bs,hab⟩,
+  use as, use bs,
+  split,
+    exact hab,
+    split, -- show ucount (M::as ++ [I,I,I] ++ bs) = k
+      rw [@nat.add_right_cancel (ucount(M::as ++ [I,I,I]++bs)) 1 k ],
+      calc ucount ((M::as) ++ [I,I,I]++bs) +1
+        = (ucount ( (M::as) ++ ([I,I,I] ++ bs))) + 1 : by simp
+    ... = (ucount(M::as) + (ucount ([I,I,I]) + ucount bs)) + 1 : by rw [ucountappend,ucountappend]
+    ... = (ucount (M::as) + 0 + ucount bs) + 1 : by simp [ucount]
+    ... = ucount (M::as) + 1 + ucount bs : by ring
+    ... = ucount (M::as) + ucount [U] + ucount bs : by simp [ucount]
+    ... = ucount (( (M::as) ++ [U]) ++ bs) : by rw [ucountappend,←ucountappend]
+    ... = ucount (M::as ++ [U] ++ bs) : by simp
+    ... = k.succ : by rw [←hab,hu],
+    rcases hm with ⟨zs,hzs,hmnze⟩,
+    rw hzs at hab, -- M ::zs = M :: as ++ [U] ++ bs
+    simp [cons_inj] at hab, -- zs = as ++ [U] ++ bs
+    rw hab at hmnze, -- M ∉ as ++ [U] ++ bs
+    simp [not_mem_append] at hmnze,
+    push_neg at hmnze, -- we have M ∉ as ∧ M ∉ bs.
+    -- split decstr (M::as ++ [I,I,I] ++ bs)
+    split, { -- first split goodm (M::as ++ [I,I,I] ++ bs)
+      constructor, simp [cons_inj], constructor,
+      refl, -- now we prove M ∉ as ++ [I,I,I] ++ bs
+      apply not_mem_append, exact hmnze.left,
+      simp, exact hmnze.right,
+    }, { -- now demonstrate the icount is correct.
+      rw hab at hzs,
+      rw hzs at hic,
+      suffices : icount (M::as ++ [I,I,I] ++ bs) = icount (M::as ++ [U]++bs) + 3, {
+        rw this,
+        simp [hic],
+      }, 
+      calc icount ((M::as) ++ [I,I,I]++bs)
+            = icount ( (M::as) ++ ([I,I,I] ++ bs)) : by simp
+        ... = icount (M::as) + (icount ([I,I,I]) + icount bs) : by rw [icountappend,icountappend]
+        ... = icount (M::as) + (3 + icount bs) : by simp [icount]
+        ... = (icount (M::as) + 0 + icount bs) + 3 : by ring
+        ... = (icount (M::as) + icount ([U]) + icount bs) + 3 : by simp [icount]
+        ... = icount (( (M::as) ++ [U]) ++ bs) + 3: by rw [icountappend,←icountappend]
+        ... = icount (M::as ++ [U] ++ bs) + 3: by simp
+    }
+
 end
 
 
@@ -379,18 +451,18 @@ theorem miu_suff  (en : miustr) (h : decstr en) : derivable en :=
 begin
 /- The next three lines have the effect of introducing ucount en as a variable that can be used for induction -/
 
-have hu : ∃ n, ucount en = n, 
-  simp,
-cases hu with n hu,
-revert en, /- Crucially, we need the induction hypothesis to quantify over en -/
-induction n with k hk, {
-  apply base_case_suf; assumption
-}, {
+  have hu : ∃ n, ucount en = n, 
+    simp,
+  cases hu with n hu,
+  revert en, /- Crucially, we need the induction hypothesis to quantify over en -/
+  induction n with k hk, {
+    apply base_case_suf; assumption
+  }, {
   intros ys hdec hus,
   /- Idea: apply the induction hypothesis hk in the case where en is the string that arises by replacing the first 'U' in ys with three 'I's. We should be able to deduce decstr en, whence, by the induction hypothesis, derivable en. Applying three_i_to_one_u, we show derivable ys. -/
   rcases ind_hyp_suf k ys hus hdec with ⟨as,bs,hyab,habuc,hdecab⟩,
-  have h₂ : derivable (as ++ [I,I,I] ++ bs) :=
-    hk (as ++ [I,I,I] ++ bs) hdecab habuc,
+  have h₂ : derivable (M::as ++ [I,I,I] ++ bs) :=
+    hk (M::as ++ [I,I,I] ++ bs) hdecab habuc,
   rw hyab,
   exact three_i_to_one_u h₂,
 }
