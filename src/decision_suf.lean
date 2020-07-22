@@ -189,10 +189,16 @@ begin
   rw this,
 end
 
-/- The next result is significant. It shows we can derive My where y
-is any string consisiting just of 'I's, where icount y is 1 or 2 modulo 3.
-
+/- lemma i_freedom is significant. It shows we can derive My where y is any string consisiting just of 'I's, where icount y is 1 or 2 modulo 3. We start with a small result needed in the larger result
 -/
+
+lemma rep_pow_minus_append  (m : ℕ) : M:: repeat I (2^m -1) ++ [I]= M::(repeat I (2^m)) :=
+begin
+  calc
+    M:: repeat I (2^m-1) ++ [I] = M::repeat I (2^m-1) ++ repeat I 1 : by simp
+                        ... = M::repeat I ( (2^m-1) + 1) : by simp [repeat_add]
+                        ... = M::repeat I (2^m) : by rw nat.sub_add_cancel (one_le_pow' m 1)
+end
 
 lemma i_freedom (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
@@ -210,7 +216,9 @@ begin
       rw h_one,  /- Case where (2^m - c)/3 ≡ 1 [MOD 2]-/
       apply derivable.r1,
       exact hw,
-      simp [rule1], /- Finished proof of hw₂ -/
+      simp [rule1], 
+      rw ←rep_pow_minus_append,
+      use (M:: repeat I (2^m-1)), /- Finished proof of hw₂ -/
   have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++ repeat U ((2^m-c)/3 % 2)),
     apply i_to_u c ((2^m-c)/3),
       exact h, /- c is 1 or 2 (mod 3) -/
