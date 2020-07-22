@@ -54,15 +54,15 @@ def miustr := list miu_atom
 instance : has_mem miu_atom miustr :=
   ⟨list.mem⟩
 
-/-
-def miustr.repr : miustr → string
+
+def miustr.mrepr : miustr → string
 | [] := ""
-| (c::cs) := c.repr ++ (miustr.repr cs)
+| (c::cs) := c.repr ++ (miustr.mrepr cs)
 
-instance : has_repr miustr :=
-⟨λ u, u.repr⟩ 
+instance miurepr : has_repr miustr :=
+⟨λ u, u.mrepr⟩ 
 
--/
+
 
 /- ... and list append. -/
 instance : has_append miustr :=
