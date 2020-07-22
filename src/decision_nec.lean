@@ -6,13 +6,11 @@ Authors: Gihan Marasingha
 
 
 
-/- We develop a decision procedure for the MIU language.
-  In this file, we derive necessary conditions for a string to be
-  derivable.
+/- We develop a decision procedure for the MIU language.  In this file, we'll give a condition decstr and show that if a string en is derivable, then decstr en holds.
 
-  This file is sufficient for solving the MU puzzle.
+Using this, we give a negation answer to the question: is "MU" derivable?
 
-  In another
+In another file, we show that the decstr en is sufficient for derivability of en.
 -/
 
 
@@ -58,8 +56,7 @@ begin
 end
 
 
-/- We show the icount, mod 3, stays the same or is multiplied by
-  2 under the rules of inference -/
+/- We show the icount, mod 3, stays the same or is multiplied by 2 under the rules of inference -/
 
 
 lemma nice_imod3rule1 (st en : miustr) (h : rule1 st en) :
@@ -81,10 +78,6 @@ begin
   ring,
 end
 
-lemma icountIII : icount [I,I,I] = 3 := by constructor
-lemma icountU : icount [U] = 0 := by constructor
-lemma icountUU : icount [U,U] = 0 := by constructor
-
 
 lemma nice_imod3rule3 (st en : miustr) (h : rule3 st en):
   nice_imod3 st en :=
@@ -94,7 +87,7 @@ begin
   have k : icount st = 3 + icount en, {
     rw [h1,h2],
     repeat {rw icountappend},
-    rw [icountIII,icountU],
+    simp [icount],
     ring,
   },
   rw k,
@@ -109,7 +102,8 @@ begin
   have k : icount st = icount en, {
     rw [h1,h2],
     repeat {rw icountappend},
-    rw [icountUU],
+    have : icount [U,U] = 0 := by constructor,
+    rw this,
     ring,
   },
   rw k,
@@ -117,8 +111,7 @@ end
 
 open nat
 
-/- Now we show that the icount of a derivable string is 
-  1 or 2 modulo 3-/
+/- Now we show that the icount of a derivable string is 1 or 2 modulo 3-/
 
 /- We start with a general result about natural numbers.
 -/
@@ -144,8 +137,7 @@ begin
 end
 
 
-/- The theorem below shows any derivable string must have an 
-  icount that is 1 or 2 modulo 3.
+/- The theorem below shows any derivable string must have an icount that is 1 or 2 modulo 3.
 -/
 theorem icntder (en : miustr): derivable en → 
   (icount en) % 3 = 1 ∨ (icount en) % 3 = 2:= 
@@ -161,8 +153,7 @@ begin
   apply nice_imod3rule4, assumption,
 end
 
-/- Using the above theorem, we solve the MU puzzle, showing
-  that MU is not derivable. -/
+/- Using the above theorem, we solve the MU puzzle, showing that MU is not derivable. -/
 
 theorem notmu : ¬(derivable "MU") :=
 begin
@@ -174,18 +165,13 @@ end
 
 /-
 
-That solves the MU puzzle, but we'll proceed by demonstrating the
-other necessary condition for a string to be derivable, namely
-that the string must start with an M and contain no M in its tail.
+That solves the MU puzzle, but we'll proceed by demonstrating the other necessary condition for a string to be derivable, namely that the string must start with an M and contain no M in its tail.
 
 -/
 
 
 /-
-
-goodm xs holds if the string xs begins with M and contains no
-M in its tail.
-
+goodm xs holds if the string xs begins with M and contains no M in its tail.
 -/
 
 def goodm (xs : miustr) : Prop :=
@@ -227,9 +213,7 @@ end
 
 
 /-
-
 We need some auxiliary lemmata
-
 -/
 
 open list
@@ -303,10 +287,7 @@ end
 
 
 /-
-
-The proof of the next lemma looks identical to the previous proof, but
-different instances of metavariables are instantiated.
-
+The proof of the next lemma looks identical to the previous proof, but different instances of metavariables are instantiated.
 -/
 
 lemma goodmrule4 (st en : miustr) (h₁ : rule4 st en) 
@@ -362,7 +343,7 @@ def decstr (en : miustr) :=
   goodm en ∧ ((icount en) % 3 = 1 ∨ (icount en) % 3 = 2)
 
 /-
-Combining the previous theorems, we show a derivable string must satsify condition decstr
+Combining the previous theorems, we show a derivable string en must satsify condition decstr en.
 -/
 
 theorem dec_nec (en : miustr) :  derivable en → decstr en:=
