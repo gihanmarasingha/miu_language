@@ -52,7 +52,11 @@ def miustr := list miu_atom
 instance : has_mem miu_atom miustr :=
   ⟨list.mem⟩
 
+/- ... and list append. -/
+instance : has_append miustr :=
+⟨list.append⟩
 
+/- For display purposes, an miustr can be represented as a string-/
 def miustr.mrepr : miustr → string
 | [] := ""
 | (c::cs) := c.repr ++ (miustr.mrepr cs)
@@ -60,14 +64,7 @@ def miustr.mrepr : miustr → string
 instance miurepr : has_repr miustr :=
 ⟨λ u, u.mrepr⟩ 
 
-
-
-/- ... and list append. -/
-instance : has_append miustr :=
-⟨list.append⟩
-
-
-/- Finally, we set up coercion from string to miustr.-/
+/- In the other, we set up coercion from string to miustr.-/
 def lchar_to_miustr : (list char) → miustr 
 | [] := []
 | (c::cs) :=

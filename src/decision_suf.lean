@@ -79,7 +79,7 @@ end
   Before that, we prove that we can remove "UU" from the end of a derivable string to produce another derivable string.
 -/
 
-/- First some auxiliary lemmas related to rule4' -/
+/- First some auxiliary lemmas related to rule4 -/
 
 lemma take_lenUU (z : miustr) : take (length z) (z ++ [U,U]) = z := by simp
 
@@ -98,7 +98,6 @@ begin
   constructor, /- Decompose disjunction in rule4 -/
   swap,
   exact (length z),
-  rw rule4',
   simp [take_lenUU,drop_lenUU],
 end
 
