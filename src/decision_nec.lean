@@ -34,13 +34,13 @@ def icount : miustr → ℕ
 lemma icountappend (a b : miustr) :
   icount (a ++ b) = icount a + icount b :=
 begin
-  induction a with ha hax haxs,
-    simp [icount],
-    cases ha;
-      simp [icount, haxs, add_assoc],
+  induction a with x hx hxs, -- treat a as x :: xs in the inductive step
+    simp [icount], -- trivial base case
+    cases x; -- the same proof applies whether x = 'M', 'I', or 'U'
+      simp [icount, hxs, add_assoc],
 end
 
-/- We define a property of having the same or double icount mod 3-/
+/- We define the property of having the same or double icount mod 3-/
 
 open nat
 
@@ -50,9 +50,14 @@ def nice_abmod3 (a b : ℕ) : Prop :=
 def nice_imod3 (st en : miustr) : Prop :=
   nice_abmod3 (icount st) (icount en)
 
-example : nice_imod3 "II" "MII" :=
+example : nice_imod3 "II" "MIUI" :=
 begin
-  left, refl,
+  left, refl, -- icount "MIUI" ≡ icount "II" [MOD 3]
+end
+
+example : nice_imod3 "IUIM" "MI" :=
+begin
+  right, refl, --icount "MI" ≡ 2*(icount "IUIUM") [MOD 3]
 end
 
 
@@ -62,7 +67,7 @@ end
 lemma nice_imod3rule1 (st en : miustr) (h : rule1 st en) :
   nice_imod3 st en :=
 begin
-  left,
+  left, -- Rule 1 should not affect the number of 'I's.
   rw rule1 at h,
   simp [h,nice_imod3,icountappend],
   refl,
@@ -72,7 +77,6 @@ lemma nice_imod3rule2  (st en : miustr) (h : rule2 st en) :
   nice_imod3 st en :=
 begin
   right,
-  rw rule2 at h,
   rcases h with ⟨xs, h1, h2⟩,
   simp [h1,h2,icount,icountappend],
   ring,
@@ -113,8 +117,7 @@ open nat
 
 /- Now we show that the icount of a derivable string is 1 or 2 modulo 3-/
 
-/- We start with a general result about natural numbers.
--/
+-- We start with a general result about natural numbers.
 
 lemma inheritmod3 (a b : ℕ) (h1 : a % 3 = 1 ∨ a % 3 = 2)
   (h2 : b % 3 = a % 3 ∨  b % 3 = (2 * a % 3)) :
