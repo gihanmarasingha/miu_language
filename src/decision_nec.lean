@@ -52,7 +52,7 @@ def nice_imod3 (st en : miustr) : Prop :=
 
 example : nice_imod3 "II" "MII" :=
 begin
-  left, constructor
+  left, refl,
 end
 
 
@@ -102,7 +102,7 @@ begin
   have k : icount st = icount en, {
     rw [h1,h2],
     repeat {rw icountappend},
-    have : icount [U,U] = 0 := by constructor,
+    have : icount [U,U] = 0 := by refl,
     rw this,
     ring,
   },

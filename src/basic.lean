@@ -92,10 +92,10 @@ instance string_coe_miustr : has_coe string miustr :=
 -/
 
 def rule1 (st : miustr) (en : miustr) : Prop :=
-  (∃ xs, st = xs ++ [I]) ∧ en = st ++ [U]
+  (∃ xs : miustr, st = xs ++ [I]) ∧ en = st ++ [U]
 
 def rule2 (st : miustr) (en : miustr) : Prop :=
-  ∃ xs, (st = M::xs) ∧ (en = M::(xs ++ xs))
+  ∃ xs : miustr, (st = M::xs) ∧ (en = M::(xs ++ xs))
 
 def rule3 (st : miustr) (en : miustr) : Prop :=
   ∃ (n : ℕ),  st = st.take n ++ [I,I,I] ++ st.drop (n+3)  ∧
@@ -110,29 +110,31 @@ def rule4 (st : miustr) (en : miustr) : Prop :=
 
 private lemma MIUfromMI : rule1 "MI" "MIU" :=
 begin
-  split,
-    use "M",
-    split,
-  split,
+  split, { -- split into showing "MI" ends in "I" and that "MIU" = "MI" ++ "U"
+    use "M", -- We take xs for "M" in  ∃ xs : "MI" = xs ++ "I"
+    refl, -- Now "MI" is 'definitionally' equal to "M" ++ "I"
+  }, {
+  refl, -- Likewise, "MIU" is definintionally equal to "MI" ++ "U"
+  }
 end
 
 example : rule2 "MIIU" "MIIUIIU" :=
 begin
-  existsi ([I,I,U]),
-  split;
-    constructor
+  use "IIU", -- we'll show "MIIU" = M::xs and "MIIUIIU" = M::(xs++xs) with xs = "IIU"
+  split; -- split the conjuction into two subgoals
+    refl, -- each of which are trivially true.
 end
 
-example : rule3  "UIUIIIMMM" "UIUUMMM" :=
+example : rule3  "UIUMIIIMMM" "UIUMUMMM" :=
 begin
-  existsi 3,
-  split; constructor
+  existsi 4, -- the second string is produced by replacing "III" from the 4th position of the first string with a "U".
+  split; refl, -- complete the proof as in the previous example.
 end
 
-example : rule4 "MIMIUUIIM" "MIMIIIM" :=
+example : rule4 "MIMIMUUIIM" "MIMIMIIM" :=
 begin
-  existsi 4,
-  split; constructor
+  existsi 5, -- the second string is produced by removing "UU" from the 5th position of the first string.
+  split; refl, -- complete the proof as in the previous examples.
 end
 
 
@@ -153,18 +155,18 @@ inductive derivable : miustr → Prop
 
 private lemma MIU_der : derivable "MIU" :=
 begin
-  constructor,
-    constructor,
-  exact MIUfromMI,
+  apply derivable.r1, -- We'll show "MIU" is derivable from another string by rule 1
+    constructor, -- "MI" is derivable, by the first constructor of miustr
+  exact MIUfromMI, -- We've proved rule1 "MI" "MIU"
 end
 
 example : derivable "MIUIU" :=
 begin
-  apply derivable.r2,
-    exact MIU_der,
-    existsi ([I,U]),
-    split;
-      constructor
+  apply derivable.r2, -- We'll show "MIUIU" can be derived if "MIU" can.
+    exact MIU_der, -- We've proved that "MIU" can be derived.
+    use "IU", -- We'll take xs = "IU" and show "MIU" = "M" ++ xs and "MIUIU" = M :: (xs ++ xs)
+    split; -- Split the conjuction
+      refl, -- and observe that the remaining goals are trivial.
 end
 
 end miu
