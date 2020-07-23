@@ -91,6 +91,7 @@ instance string_coe_miustr : has_coe string miustr :=
 
 -/
 
+
 def rule1 (st : miustr) (en : miustr) : Prop :=
   (∃ xs : miustr, st = xs ++ [I]) ∧ en = st ++ [U]
 
