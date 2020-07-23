@@ -80,6 +80,8 @@ instance string_coe_miustr : has_coe string miustr :=
 ⟨λ st, lchar_to_miustr st.data ⟩
 
 
+
+
 /- 
    THE RULES OF INFERENCE 
    There are four rules of inference for MIU.
@@ -99,12 +101,12 @@ def rule2 (st : miustr) (en : miustr) : Prop :=
   ∃ xs : miustr, (st = M::xs) ∧ (en = M::(xs ++ xs))
 
 def rule3 (st : miustr) (en : miustr) : Prop :=
-  ∃ (n : ℕ),  st = st.take n ++ [I,I,I] ++ st.drop (n+3)  ∧
-  en = st.take n ++ [U] ++ st.drop (n+3)
+  ∃ (as bs : miustr),  st = as ++ [I,I,I] ++ bs  ∧
+  en = as ++ [U] ++ bs
 
 def rule4 (st : miustr) (en : miustr) : Prop :=
-  ∃ (n : ℕ),   st = st.take n ++ [U,U] ++ st.drop (n+2)  ∧
-  en = st.take n ++ st.drop (n+2)
+  ∃ (as bs : miustr),   st = as ++ [U,U] ++ bs  ∧
+  en = as ++ bs
 
 
 /- RULE USAGE EXAMPLES -/
@@ -128,14 +130,18 @@ end
 
 example : rule3  "UIUMIIIMMM" "UIUMUMMM" :=
 begin
-  existsi 4, -- the second string is produced by replacing "III" from the 4th position of the first string with a "U".
-  split; refl, -- complete the proof as in the previous example.
+  use "UIUM", -- With as = "UIUM" and bs = "MMM", the first string is
+  use "MMM", -- as ++ "III" ++ bs and the second is as ++ "U" ++ bs
+  split; -- We prove the conjunction as in the previous proof.
+    refl,
 end
 
 example : rule4 "MIMIMUUIIM" "MIMIMIIM" :=
 begin
-  existsi 5, -- the second string is produced by removing "UU" from the 5th position of the first string.
-  split; refl, -- complete the proof as in the previous examples.
+ use "MIMIM", -- With as = "MIMIM" and bs = "IIM", the first string
+ use "IIM", -- is as ++ "UU" + bs and the second is as ++ bs
+ split;
+  refl,
 end
 
 
@@ -165,9 +171,30 @@ example : derivable "MIUIU" :=
 begin
   apply derivable.r2, -- We'll show "MIUIU" can be derived if "MIU" can.
     exact MIU_der, -- We've proved that "MIU" can be derived.
-    use "IU", -- We'll take xs = "IU" and show "MIU" = "M" ++ xs and "MIUIU" = M :: (xs ++ xs)
+    use "IU", -- Taking xs = "IU", we'll show "MIU" = M::xs and "MIUIU" = M :: (xs ++ xs)
     split; -- Split the conjuction
       refl, -- and observe that the remaining goals are trivial.
+end
+
+-- We give a forward derivation for the next proof
+example : derivable "MUI" :=
+begin
+  have h₁ : derivable "MI",
+    exact derivable.mk, -- the axiom
+  have h₂ : derivable "MII",
+    apply derivable.r2,
+      exact h₁, -- recall the axiom
+      use "I", -- Taking xs = "I", we'll show "MI" = M::xs and "MII" = M::(xs++xs)
+      split; refl,
+  have h₃ : derivable "MIIII",
+    apply derivable.r2,
+      exact h₂, -- the derivability of "MII"
+      use "II", split; refl, -- much as in the proof of h₂
+  apply derivable.r3, -- We prove our main goal using rule 3
+    exact h₃, -- based on the derivability of "MIIII",
+    use "M", -- with as = "M" and bs = "I", we have "MIII" = as ++ "III" + bs
+    use "I", -- and "MUI" = as ++ "U" ++ bs
+    split; refl,
 end
 
 end miu

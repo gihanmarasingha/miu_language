@@ -82,19 +82,13 @@ begin
   ring,
 end
 
-
 lemma nice_imod3rule3 (st en : miustr) (h : rule3 st en):
   nice_imod3 st en :=
 begin
   left,
-  rcases h with ⟨n, h1, h2⟩,
-  have k : icount st = 3 + icount en, {
-    rw [h1,h2],
-    repeat {rw icountappend},
-    simp [icount],
-    ring,
-  },
-  rw k,
+  rcases h with ⟨as,bs,⟨hst,hen⟩⟩,
+  rw [hst,hen],
+  simp [icountappend,icount,refl],
   ring,
 end
 
@@ -102,16 +96,11 @@ lemma nice_imod3rule4 (st en : miustr) (h : rule4 st en):
   nice_imod3 st en :=
 begin
   left,
-  rcases h with ⟨n, h1, h2⟩,
-  have k : icount st = icount en, {
-    rw [h1,h2],
-    repeat {rw icountappend},
-    have : icount [U,U] = 0 := by refl,
-    rw this,
-    ring,
-  },
-  rw k,
+  rcases h with ⟨as,bs,⟨hst,hen⟩⟩,
+  rw [hst,hen],
+  simp [icountappend,icount,refl],
 end
+
 
 open nat
 
@@ -167,9 +156,7 @@ end
 
 
 /-
-
 That solves the MU puzzle, but we'll proceed by demonstrating the other necessary condition for a string to be derivable, namely that the string must start with an M and contain no M in its tail.
-
 -/
 
 
@@ -215,110 +202,66 @@ begin
 end
 
 
-/-
-We need some auxiliary lemmata
--/
-
 open list
 
-private lemma m_in_drop (n : ℕ) (ys : miustr) (h : M ∈ drop n ys) :
-  M ∈ ys :=
-begin
-  revert ys,
-  induction n with k hk, {
-    tauto, 
-  }, {
-    intro xs,
-    induction xs with z zs hzs, {
-      tauto,
-    }, {
-      specialize hk zs,
-      rw [drop,mem_cons_iff],
-      exact λ w, or.inr (hk w)
-    }
-  }
-end
-
-
-private lemma m_in_take (n : ℕ) (ys : miustr) (h : M ∈ take n ys) :
-  M ∈ ys :=
-begin
-  revert ys,
-  induction n with k hk, {
-    tauto,
-  }, {
-    intro xs,
-    induction xs with z zs hzs, {
-      tauto,
-    }, {
-      specialize hk zs,
-      simp [take,mem_cons_iff],
-      exact or.imp_right hk,
-    }
-  }
-end
-
-
-lemma goodmrule3 (st en : miustr) (h₁ : rule3 st en) 
+lemma goodmrule3  (st en : miustr) (h₁ : rule3 st en) 
   (h₂ : goodm st) : goodm en :=
 begin
   rcases h₂ with ⟨ys, p₁, p₂⟩,
-  rcases h₁ with ⟨n, k₁, k₂⟩,
-  cases n, { /- 'induction' on n-/
-    rw p₁ at k₁,
-    cases k₁, /- end of base case-/
+  rcases h₁ with ⟨as,bs,⟨hst,hen⟩⟩,
+  rw p₁ at hst,
+  have h : ∃ zs, as = M :: zs,
+    induction as with x xs hxs, { -- base case
+      exfalso, 
+      have : M = I,
+        rw head_eq_of_cons_eq hst,
+      contradiction,
+    }, { -- induction step
+      use xs,
+      have : M = x,
+        rw head_eq_of_cons_eq hst,
+      rw ←this,
+    },
+  cases h with zs h,
+  use (zs++[U]++bs),
+  split, {
+    simp [hen,h],
   }, {
-    split, split, { 
-      rw k₂, /- Show en starts with M -/
-      have : take (succ n) st = M::_,
-        rw p₁, refl,
-      rwa this, simp,
-    }, { /- Show en has no M in its tail-/
-      simp [p₂],
-      push_neg,
-      split, { /- The 'take' part -/
-        intro h,
-        exact p₂ (m_in_take n ys h),
-      }, {  /- The 'drop' part -/
-        intro h, 
-        rw [p₁,drop] at h,
-        exact p₂ (m_in_drop _ ys h),
-      }
-    }
+    simp [h,cons_inj] at hst,
+    revert p₂,
+    simp [hst],
   }
 end
 
 
-/-
-The proof of the next lemma looks identical to the previous proof, but different instances of metavariables are instantiated.
--/
+-- The proof of the next lemma is very similar to the previous proof!
 
 lemma goodmrule4 (st en : miustr) (h₁ : rule4 st en) 
   (h₂ : goodm st) : goodm en :=
 begin
   rcases h₂ with ⟨ys, p₁, p₂⟩,
-  rcases h₁ with ⟨n, k₁, k₂⟩,
-  cases n, { /- 'induction' on n-/
-    rw p₁ at k₁,
-    cases k₁, /- end of base case-/
+  rcases h₁ with ⟨as,bs,⟨hst,hen⟩⟩,
+  rw p₁ at hst,
+  have h : ∃ zs, as = M :: zs,
+    induction as with x xs hxs, { -- base case
+      exfalso, 
+      have : M = U,
+        rw head_eq_of_cons_eq hst,
+      contradiction,
+    }, {
+      use xs,
+      have : M = x,
+        rw head_eq_of_cons_eq hst,
+      rw ←this,
+    },
+  cases h with zs h,
+  use (zs++bs),
+  split, {
+    simp [hen,h],
   }, {
-    split, split, { 
-      rw k₂, /- Show en starts with M -/
-      have : take (succ n) st = M::_,
-        rw p₁, refl,
-      rwa this, simp,
-    }, { /- Show en has no M in its tail-/
-      simp [p₂],
-      push_neg,
-      split, { /- The 'take' part -/
-        intro h,
-        exact p₂ (m_in_take n ys h),
-      }, {  /- The 'drop' part -/
-        intro h, 
-        rw [p₁,drop] at h,
-        exact p₂ (m_in_drop _ ys h),
-      }
-    }
+    simp [h,cons_inj] at hst,
+    revert p₂,
+    simp [hst],
   }
 end
 

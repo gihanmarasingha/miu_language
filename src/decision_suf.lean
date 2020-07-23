@@ -79,26 +79,14 @@ end
   Before that, we prove that we can remove "UU" from the end of a derivable string to produce another derivable string.
 -/
 
-/- First some auxiliary lemmas related to rule4 -/
-
-lemma take_lenUU (z : miustr) : take (length z) (z ++ [U,U]) = z := by simp
-
-lemma drop_lenUU (z : miustr) : drop (length z + 2) (z ++ [U,U]) = [] :=
-begin
-  induction z with _ _ hsx,
-    simp, /- base case -/
-    apply hsx, /- inductive step -/
-end
 
 lemma removeUUat_end (z : miustr) (h : derivable (z ++ [U,U])) :
   derivable z :=
 begin
   apply derivable.r4,
   exact h,
-  constructor, /- Decompose disjunction in rule4 -/
-  swap,
-  exact (length z),
-  simp [take_lenUU,drop_lenUU],
+  use z, use ([] : miustr),
+  split; simp,
 end
 
 lemma remove_UUs (z : miustr) (m : ℕ) (h : derivable (z ++ repeat U (m*2)))
@@ -115,29 +103,14 @@ begin
   }
 end
 
-/- A minor result. -/
-
-lemma drop_lenIII (z w : miustr) : drop (length z + 3) (z ++ [I,I,I] ++ w) = w :=
-begin
-  induction z with _ _ hsx,
-    simp, /- base case -/
-    apply hsx, /- inductive step -/
-end
-
 /- An important auxliary result: -/
 
-lemma three_i_to_one_u {as bs : miustr} (h : derivable (as ++ [I,I,I] ++ bs))  : derivable (as ++ [U] ++ bs) :=
+lemma three_i_to_one_u {cs ds : miustr} (h : derivable (cs ++ [I,I,I] ++ ds))  : derivable (cs ++ [U] ++ ds) :=
 begin
   apply derivable.r3,
   exact h,
-  unfold rule3,
-  use (length as),
-  have h₁ :(take (length as) (as ++ [I, I, I] ++ bs)) = as :=
-    by simp,
-  have h₂ : (drop (length as + 3) (as ++ [I, I, I] ++ bs)) = bs:=
-    drop_lenIII as bs,
-  constructor;
-  rw [h₁,h₂],
+    use cs, use ds,
+    split; simp,
 end
 
 
