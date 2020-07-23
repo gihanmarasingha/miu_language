@@ -100,19 +100,13 @@ def rule1 (st : miustr) (en : miustr) : Prop :=
 def rule2 (st : miustr) (en : miustr) : Prop :=
   ∃ xs, (st = M::xs) ∧ (en = M::(xs ++ xs))
 
-def rule3' (st : miustr) (en : miustr) (n : ℕ) : Prop :=
-  st = st.take n ++ [I,I,I] ++ st.drop (n+3)  ∧
+def rule3 (st : miustr) (en : miustr) : Prop :=
+  ∃ (n : ℕ),  st = st.take n ++ [I,I,I] ++ st.drop (n+3)  ∧
   en = st.take n ++ [U] ++ st.drop (n+3)
 
-def rule3 (st : miustr) (en : miustr) : Prop :=
-  ∃ (n : ℕ), rule3' st en n
-
-def rule4' (st : miustr) (en : miustr) (n : ℕ) : Prop := 
-  st = st.take n ++ [U,U] ++ st.drop (n+2)  ∧
-  en = st.take n ++ st.drop (n+2)
-
 def rule4 (st : miustr) (en : miustr) : Prop :=
-  ∃ (n : ℕ), rule4' st en n
+  ∃ (n : ℕ),   st = st.take n ++ [U,U] ++ st.drop (n+2)  ∧
+  en = st.take n ++ st.drop (n+2)
 
 
 /- RULE USAGE EXAMPLES -/
@@ -132,19 +126,9 @@ begin
     constructor
 end
 
-example : rule3' "UIUIIIMMM" "UIUUMMM" 3 :=
-begin
-  split; constructor
-end
-
 example : rule3  "UIUIIIMMM" "UIUUMMM" :=
 begin
   existsi 3,
-  split; constructor
-end
-
-example : rule4' "MIMIUUIIM" "MIMIIIM" 4 :=
-begin
   split; constructor
 end
 
