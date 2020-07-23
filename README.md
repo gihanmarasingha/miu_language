@@ -47,7 +47,7 @@ def rule1 (st : miustr) (en : miustr) : Prop :=
   (∃ xs, st = xs ++ [I]) ∧ en = st ++ [U]
 ```
 
-The necessary and sufficient condition for a string to be deriable is
+The necessary and sufficient condition for a string to be derivable is
 ```lean
 def decstr (en : miustr) :=
   goodm en ∧ ((icount en) % 3 = 1 ∨ (icount en) % 3 = 2)
