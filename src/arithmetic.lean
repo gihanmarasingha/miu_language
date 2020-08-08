@@ -12,11 +12,10 @@ import tactic.linarith
 A basic arithmetic result needed to analyse the MIU system.
 -/
 
-
-
 open nat
-/--
 
+/--
+If `c ≡ 1 [MOD 3]`, then there exists `k`, a power of 2 for which `c ≡ k [MOD 3]` and `c ≤ k`.
 -/
 private lemma mod1pow (x : ℕ) : ∃ m : ℕ, 1 + 3*x ≤ 2^m ∧ 2^m ≡ 1 [MOD 3] :=
 begin
@@ -50,9 +49,9 @@ begin
   }
 end
 
-/- The next lemma is a minor variant of the above. Maybe there's a
-clever way to avoid repeating essentially the same proof. -/
-
+/--
+`mod2pow` is almost identical to `mod1pow`, but with `c ≡ 2 [MOD 3]`.
+-/
 private lemma mod2pow (x : ℕ) : ∃ m : ℕ, 2+3*x ≤ 2^m ∧ 2^m ≡ 2 [MOD 3]  :=
 begin
   induction x with k hk, { 
