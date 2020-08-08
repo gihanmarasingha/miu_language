@@ -3,16 +3,21 @@ Copyright (c) 2020 Gihan Marasingha. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Gihan Marasingha
 -/
-
-
-/- Some basic arithmetic results needed for the MIU proof. 
-   Probably amenable to significant refactoring! -/
-
 import data.nat.modeq
 import tactic.linarith
 
-open nat
+/-!
+# Arithmetic
 
+A basic arithmetic result needed to analyse the MIU system.
+-/
+
+
+
+open nat
+/--
+
+-/
 private lemma mod1pow (x : ℕ) : ∃ m : ℕ, 1 + 3*x ≤ 2^m ∧ 2^m ≡ 1 [MOD 3] :=
 begin
   induction x with k hk, { 
@@ -80,8 +85,9 @@ begin
   }
 end
 
-/- We combine the above two results to give the desired result. -/
-
+/--
+If `c` is 1 or 2 modulo 3, then exists `k` a power of 2 for which `c ≤ k` and `c ≡ k [MOD 3]`.
+-/
 lemma mod12pow (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2) :
   ∃ m : ℕ, c ≤ (pow 2 m) ∧ (pow 2 m) % 3 = c % 3:=
 begin
