@@ -3,31 +3,43 @@ Copyright (c) 2020 Gihan Marasingha. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Gihan Marasingha
 -/
-
-
-/-
-
-We give a sufficient condition for a string to be derivable in the MIU language.
-
-Let icount x and ucount x denote the number of 'I's (respectively 'U's) in the MIU string x.
-
-We'll show that an MIU string is derivable if it has the form Mx where x is a string of 'I's and 'U's where icount x is congruent to 1 or 2 modulo 3.
-
-To prove this, it suffices to be able to show that one can derive an MIU string My where y is a string consisting only of 'I's and where the number of 'I's in y is a+3b where a = icount x and b = ucount x. This suffices because Rule 3 permits us to change any string of three consecutive 'I's into a 'U'.
-
-Note icount y = (icount x) + 3(ucount x) ≡ icount x (mod 3). Thus, it suffices to show we can generate any string Mz where z is a string of 'I's such that icount z is congruent to 1 or 2 modulo 3.
-
-Let z be such a string and let c denote icount z, so c ≡ 1 or 2 (mod 3).
-To derive such a string, it suffices to derive a string Mw, where again w is a string of only 'I's with the additional conditions that icount w is a power of 2, that icount w ≥ c and that icount w ≡ c (mod 3).
-
-To see that this suffices, note that we can remove triples of 'I's from the end of Mw, creating 'U's as we go along. Once the number of 'I's equals m, we just remove 'U's two at a time until we have no 'U's. The only issue is that we may not have an even number of 'U's! Writing d = icount w, we see that this happens if and only if (d-c)/3 is odd.
-To forestall this eventuality, we apply Rule 1 to z in this case, prior to removing triples of 'I's. By applying Rule 1, we add an additional 'U' so the final number of 'U's will be even.
-
--/
-
 import decision_nec
 import tactic.linarith
 import arithmetic
+
+/-!
+# Decision procedure - sufficient condition
+
+We give a sufficient condition for a string to be derivable in the MIU language.
+
+Let `icount st` and `ucount st` denote the number of `I`s (respectively `U`s) in `st : miustr`.
+
+We'll show that an MIU string is `derivable` if it has the form `M::x` where `x` is a string of `I`s
+and `U`s where `icount x` is congruent to 1 or 2 modulo 3.
+
+To prove this, it suffices to be able to show that one can derive an `miustr` `M::y` where `y` is
+an `miustr` consisting only of `I`s and where the number of `I`s in `y` is `a+3b` where
+`a = icount x` and `b = ucount x`.
+This suffices because Rule 3 permits us to change any string of three consecutive `I`s into a `U`.
+
+Note `icount y = (icount x) + 3(ucount x) ≡ icount x [MOD 3]`. Thus, it suffices to show we can
+generate any `miustr` `M::z` where `z` is an `miustr` of `I`s such that `icount z` is congruent to
+1 or 2 modulo 3.
+
+Let `z` be such an `miustr` and let `c` denote `icount z`, so `c ≡ 1 or 2 [MOD 3]`.
+To derive such an `miustr`, it suffices to derive an `miustr` `M::w`, where again w is an
+`miustr` of only `I`s with the additional conditions that `icount w` is a power of 2, that
+`icount w ≥ c` and that `icount w ≡ c [MOD 3]`.
+
+To see that this suffices, note that we can remove triples of `I`s from the end of `M::w`,
+creating `U`s as we go along. Once the number of `I`s equals `m`, we just remove `U`s two at a time
+until we have no `U`s. The only issue is that we may not have an even number of `U`s!
+Writing `d = icount w`, we see that this happens if and only if `(d-c)/3` is odd.
+To avoid this, we apply Rule 1 to `z` in this case, prior to removing triples of `I`s.
+By applying Rule 1, we add an additional `U` so the final number of `U`s will be even.
+-/
+
+
 
 namespace miu
 
@@ -35,14 +47,16 @@ open miu_atom
 open list
 open nat
 
-/- An auxiliary result -/
-
+/--
+This simple result shows that adding
+-/
 lemma doublerep {x : miu_atom} (m : ℕ) : repeat x m ++ repeat x m = repeat x (m*2) :=
 by simp [repeat_add, mul_two]
 
 
 /-
-  We start by showing that a string Mw can be created, where w consists only of 'I's and such that icount w is a power of 2.
+We start by showing that an `miustr` `M::w` can be created, where `w` consists only of `I`s and
+such that `icount w` is a power of 2.
 -/
 
 
@@ -427,7 +441,7 @@ begin
 end
 
 
-theorem miu_suff  (en : miustr) (h : decstr en) : derivable en :=
+theorem dec_suff  (en : miustr) (h : decstr en) : derivable en :=
 begin
 /- The next three lines have the effect of introducing ucount en as a variable that can be used for induction -/
 
