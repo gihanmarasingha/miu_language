@@ -206,10 +206,10 @@ rule1, rule2, rule3, rule4.
 -/
 inductive derivable : miustr → Prop
 | mk : derivable "MI"
-| r1 : ∀ st en : miustr, derivable st → rule1 st en → derivable en
-| r2 : ∀ st en : miustr, derivable st → rule2 st en → derivable en
-| r3 : ∀ st en : miustr, derivable st → rule3 st en → derivable en
-| r4 : ∀ st en : miustr, derivable st → rule4 st en → derivable en
+| r1 {st en} : derivable st → rule1 st en → derivable en
+| r2 {st en} : derivable st → rule2 st en → derivable en
+| r3 {st en} : derivable st → rule3 st en → derivable en
+| r4 {st en} : derivable st → rule4 st en → derivable en
 
 
 /-!
