@@ -3,27 +3,55 @@ Copyright (c) 2020 Gihan Marasingha. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Gihan Marasingha
 -/
-
-
-/-
-
-  A Lean implementation of the MIU language of
-  Hofstadter's GEB.
-
-  In this file, we create the necessary data types and rules of inference.
-
--/
 import tactic.linarith
-/-
 
-SET UP THE NECESSARY DATA TYPES
+/-!
+# An MIU Decision Procedure in Lean
 
+The [MIU formal system](https://en.wikipedia.org/wiki/MU_puzzle) was introduced by Douglas
+Hofstadter in the first chapter of his 1979 book,
+[Gödel, Escher, Bach](https://en.wikipedia.org/wiki/G%C3%B6del,_Escher,_Bach).
+The system is defined by four rules of inference, one axiom, and an alphabet of three symbols:
+`M`, `I`, and `U`.
+
+Hofstadter's central question is: can the string "MU" be derived?
+
+It transpires that there is a simple decision procedure for this system. A string is derivable if
+and only if it starts with "M", contains no other "M"s, and the number of "I"s in the string is
+congruent to 1 or 2 modulo 3.
+
+## The MIU System
+
+An _atom_ is any one of `M`, `I` or `U`. A _string_ is a finite sequence of zero or more symbols.
+To simplify notation, we write a sequence `[I,U,U,M]`, for example, as `IUUM`.
+
+The four rules of inference are:
+
+1. x`I` → x`IU`,
+2. `M`x → `M`xx,
+3. x`III`y → x`U`y,
+4. x`UU`y → xy,
+
+where the notation α → β is to be interpreted as 'if α is derivable, then β is derivable'.
+
+Additionally, we have an axiom
+
+* `MI` is derivable.
+
+In this file, the set of atoms and the set of derivable strings are represented as inductive types.
 -/
+
 
 namespace miu
 
+/-!
+### Basic data types
+-/
 
-/- Each MIU string consists of either an M, I, or U. Such an elementary unit is called a miu_atom. We represent miu_atom as an enumerated type -/
+/--
+Each MIU string consists of either an M, I, or U. Such an elementary unit is called an miu_atom.
+We represent miu_atom as an enumerated type.
+-/
 inductive miu_atom : Type
 | M : miu_atom
 | I : miu_atom
@@ -31,32 +59,47 @@ inductive miu_atom : Type
 
 open miu_atom 
 
-/- We show that the type miu_atom is inhabited, giving M (for no particular reason) as the default element. -/
+/--
+We show that the type miu_atom is inhabited, giving M (for no particular reason) as the default
+element.
+-/
 instance miu_atom_inhabited : inhabited miu_atom :=
 inhabited.mk M
 
-/- We define a simple function from miu_atom to string-/
+/--
+A simple function from miu_atom to string.
+-/
 def miu_atom.repr : miu_atom → string 
 | M := "M"
 | I := "I"
 | U := "U"
 
-/- We use the above function to give a representation of a miu_atom -/
+/--
+A representation of an miu_atom.
+-/
 instance : has_repr miu_atom :=
 ⟨λ u, u.repr⟩
 
-/- For simplicity, a miustr is just a list of miu_atom -/
+/--
+For simplicity, a miustr is just a list of miu_atom.
+-/
 def miustr := list miu_atom 
 
-/- We want to use list membership ... -/
+/--
+We want to use list membership ...
+-/
 instance : has_mem miu_atom miustr :=
   ⟨list.mem⟩
 
-/- ... and list append. -/
+/--
+... and list append.
+-/
 instance : has_append miustr :=
 ⟨list.append⟩
 
-/- For display purposes, an miustr can be represented as a string-/
+/--
+For display purposes, an miustr can be represented as a string.
+-/
 def miustr.mrepr : miustr → string
 | [] := ""
 | (c::cs) := c.repr ++ (miustr.mrepr cs)
@@ -64,7 +107,9 @@ def miustr.mrepr : miustr → string
 instance miurepr : has_repr miustr :=
 ⟨λ u, u.mrepr⟩ 
 
-/- In the other, we set up coercion from string to miustr.-/
+/--
+In the other direction, we set up coercion from string to miustr.
+-/
 def lchar_to_miustr : (list char) → miustr 
 | [] := []
 | (c::cs) :=
@@ -81,15 +126,15 @@ instance string_coe_miustr : has_coe string miustr :=
 
 
 
+/-!
+### The rules of inference
 
-/- 
-   THE RULES OF INFERENCE 
-   There are four rules of inference for MIU.
-   
-   Rule 1:  xI → xIU
-   Rule 2:  Mx → Mxx
-   Rule 3:  xIIIy → xUy
-   Rule 4:  xUUy → xy
+There are four rules of inference for MIU.
+
+Rule 1:  xI → xIU
+Rule 2:  Mx → Mxx
+Rule 3:  xIIIy → xUy
+Rule 4:  xUUy → xy
 
 -/
 
@@ -109,7 +154,9 @@ def rule4 (st : miustr) (en : miustr) : Prop :=
   en = as ++ bs
 
 
-/- RULE USAGE EXAMPLES -/
+/-!
+### Rule usage examples
+-/
 
 private lemma MIUfromMI : rule1 "MI" "MIU" :=
 begin
@@ -145,12 +192,18 @@ begin
 end
 
 
-/-
-  DERIVABILITY
- 
-  There is exactly one axiom of MIU, namely that "MI" is derivable. From this, and the rules of inference, we define an type 'derivable' so that 'derivable st' corresonds to the notion that the miutr st is derivable in MIU. We represent 'derivable' as an inductive family.
- -/
+/-!
+### Derivability
+There is exactly one axiom of MIU, namely that "MI" is derivable. From this, and the rules of
+inference, we define an type 'derivable' so that 'derivable st' corresonds to the notion that
+the miutr st is derivable in MIU. We represent 'derivable' as an inductive family.
+-/
 
+/--
+The inductive type derivable has five constructors. The default constructor corresponds to the
+axiom that "MI" is derivable. Each of the constructors r1, r2, r3, r4 corresponds to the rules
+rule1, rule2, rule3, rule4.
+-/
 inductive derivable : miustr → Prop
 | mk : derivable "MI"
 | r1 : ∀ st en : miustr, derivable st → rule1 st en → derivable en
@@ -158,7 +211,10 @@ inductive derivable : miustr → Prop
 | r3 : ∀ st en : miustr, derivable st → rule3 st en → derivable en
 | r4 : ∀ st en : miustr, derivable st → rule4 st en → derivable en
 
-/- DERIVABILITY EXAMPLES -/
+
+/-!
+### Derivability examples
+-/
 
 private lemma MIU_der : derivable "MIU" :=
 begin
