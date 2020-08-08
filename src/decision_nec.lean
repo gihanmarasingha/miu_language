@@ -139,7 +139,8 @@ begin
 end
 
 
-/- The theorem below shows any derivable string must have an icount that is 1 or 2 modulo 3.
+/--
+`inctder` shows any derivable string must have an `icount` that is 1 or 2 modulo 3.
 -/
 theorem icntder (en : miustr): derivable en → 
   (icount en) % 3 = 1 ∨ (icount en) % 3 = 2:= 
@@ -155,8 +156,9 @@ begin
   apply nice_imod3rule4, assumption,
 end
 
-/- Using the above theorem, we solve the MU puzzle, showing that MU is not derivable. -/
-
+/--
+Using the above theorem, we solve the MU puzzle, showing that `"MU"` is not derivable.
+-/
 theorem notmu : ¬(derivable "MU") :=
 begin
   intro h,
@@ -166,18 +168,20 @@ end
 
 
 /-
-That solves the MU puzzle, but we'll proceed by demonstrating the other necessary condition for a string to be derivable, namely that the string must start with an M and contain no M in its tail.
+### Condition on `M`
+
+That solves the MU puzzle, but we'll proceed by demonstrating the other necessary condition for a
+string to be derivable, namely that the string must start with an M and contain no M in its tail.
 -/
 
 
-/-
-goodm xs holds if the string xs begins with M and contains no M in its tail.
+/--
+`goodm xs` holds if `xs : miustr` begins with `M` and contains no `M` in its tail.
 -/
-
 def goodm (xs : miustr) : Prop :=
   ∃ ys : miustr, xs = (M::ys) ∧ ¬(M ∈ ys)
 
-/- Example usage :-/
+/- Example usage -/
 
 lemma goodmi : goodm [M,I] :=
 begin
@@ -186,6 +190,11 @@ begin
   exact [I],
   simp,
 end
+
+/-
+We'll show, for each `i` from 1 to 4, that if `en` follows by rule `i` from `st` and if
+`goodm st` holds, then so does `goodm en`.
+-/
 
 lemma goodmrule1 (st en : miustr) (h₁ : rule1 st en) 
   (h₂ : goodm st) : goodm en :=
@@ -276,7 +285,8 @@ begin
 end
 
 
-/- The theorem below shows any derivable string must begin with M and contain no M in its tail.
+/--
+Any derivable string must begin with `M` and contain no `M` in its tail.
 -/
 theorem goodmder (en : miustr): derivable en → 
   goodm en:= 
@@ -291,16 +301,20 @@ begin
 end
 
 /-
-We put togther our two conditions to give one condition decstr. Once we've proved sufficiency of this condition, we'll have proved that checking the condition is a decision procedure.
+We put togther our two conditions to give one condition `decstr`. Once we've proved sufficiency of
+this condition, we'll have proved that checking the condition is a decision procedure.
 -/
 
+/--
+`decstr en` is the condition that `icount en` is 1 or 2 modulo 3, that `en` starts with `M`, and
+that `en` contains no `M` in its tail.
+-/
 def decstr (en : miustr) :=
   goodm en ∧ ((icount en) % 3 = 1 ∨ (icount en) % 3 = 2)
 
-/-
-Combining the previous theorems, we show a derivable string en must satsify condition decstr en.
+/--
+Suppose `en : miustr`. If `en` is `derivable`, then the condition `decstr en` holds.
 -/
-
 theorem dec_nec (en : miustr) : derivable en → decstr en:=
 begin
   intro h,
