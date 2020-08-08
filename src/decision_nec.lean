@@ -3,34 +3,43 @@ Copyright (c) 2020 Gihan Marasingha. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Gihan Marasingha
 -/
-
-
-
-/- We develop a decision procedure for the MIU language.  In this file, we'll give a condition decstr and show that if a string en is derivable, then decstr en holds.
-
-Using this, we give a negation answer to the question: is "MU" derivable?
-
-In another file, we show that the decstr en is sufficient for derivability of en.
--/
-
-
-
 import basic
 import data.nat.modeq
 import tactic.ring
+
+/-!
+# Decision procedure - necessary condition
+
+We introduce a condition `decstr` and show that if a string `en` is `derivable`, then `decstr en`
+holds.
+
+Using this, we give a negative answer to the question: is `"MU"` derivable?
+-/
 
 namespace miu
 
 open miu_atom
 
-/- The icount is the number of 'I's in an miustr -/
+/-!
+### Numerical condition on the `I count
 
+Let `icount st` denote the number of `I`s in `st : miustr`. We'll show that the `icount` of a
+derivable string must be 1 or 2 moduloe 3. To do this, it suffices to show that if the `miustr`
+`en` is derived from `st`, then `icount en` moudulo 3 is either equal to or is twice `icount st`
+modulo 3.
+-/
+
+/--
+`icount` is the number of `I`s in an `miustr`
+-/
 def icount : miustr → ℕ
 | [] := 0
 | (I::cs) := 1 + icount cs
 | (_::cs) := icount cs
 
-/- We show that icount is additive with respect to append -/
+/--
+`icount` is additive with respect to `append` 
+-/
 lemma icountappend (a b : miustr) :
   icount (a ++ b) = icount a + icount b :=
 begin
@@ -40,15 +49,16 @@ begin
       simp [icount, hxs, add_assoc],
 end
 
-/- We define the property of having the same or double icount mod 3-/
-
 open nat
 
-def nice_abmod3 (a b : ℕ) : Prop :=
-  b ≡ a [MOD 3] ∨ b ≡ 2*a [MOD 3]
-
+/--
+Given `st en : miustr`, the relation `nice_imod3 st en` holds if `st` and `en` either
+have equal `icount`, modulo 3, or `icount en` is twice `icount st`, modulo 3.`
+ -/
 def nice_imod3 (st en : miustr) : Prop :=
-  nice_abmod3 (icount st) (icount en)
+  let a := (icount st) in
+  let b := (icount en) in
+  b ≡ a [MOD 3] ∨ b ≡ 2*a [MOD 3]
 
 example : nice_imod3 "II" "MIUI" :=
 begin
@@ -61,7 +71,7 @@ begin
 end
 
 
-/- We show the icount, mod 3, stays the same or is multiplied by 2 under the rules of inference -/
+/-  We show the icount, mod 3, stays the same or is multiplied by 2 under the rules of inference -/
 
 
 lemma nice_imod3rule1 (st en : miustr) (h : rule1 st en) :
