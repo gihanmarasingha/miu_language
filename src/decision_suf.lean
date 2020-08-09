@@ -48,28 +48,21 @@ open list
 open nat
 
 /--
-This simple result shows that adding
+We start by showing that an `miustr` `M::w` can be derived, where `w` consists only of `I`s and
+where `icount w` is a power of 2.
 -/
-lemma doublerep {x : miu_atom} (m : ℕ) : repeat x m ++ repeat x m = repeat x (m*2) :=
-by simp [repeat_add, mul_two]
-
-
-/-
-We start by showing that an `miustr` `M::w` can be created, where `w` consists only of `I`s and
-such that `icount w` is a power of 2.
--/
-
-
 lemma pow2str (n : ℕ) : derivable (M::(repeat I (2^n))) :=
 begin
   induction n with k hk, {
     constructor, /- base case -/
   }, { /- Start of induction step -/
-    apply derivable.r2, { /- We'll use rule 2 -/
-      exact hk, /- hk : M followed by 2^k I's is derivable -/
+    apply derivable.r2, { /- We'll use `rule 2` -/
+      exact hk, /- `hk : M` followed by `2^k` `I`s is derivable -/
     }, {
-      constructor, /- decompose the disjunction -/
-      rw doublerep, /- Replace two identical I strings with one twice as long -/
+      constructor, /- decompose `∃` -/
+      have : repeat I (2^k) ++ repeat I (2^k) = repeat I ((2^k)*2),
+        simp [repeat_add, mul_two],
+      rw this, /- Replace two identical `I` strings with one twice as long -/
       split; 
         refl,
     }
@@ -77,23 +70,29 @@ begin
 end
 
 
-/-
-  We need a more precise result. For any given natural number c ≡ 1 or 2 (mod 3), we need to show that can derive a string Mw where w consists only of 'I's,  where d = icount w is a power of 2, where d ≥ c and where d ≡ c (mod 3).
 
-  Given the above lemmas, the desired result reduces to an arithmetic result, given in the file arithmetic.lean.
+/-!
+## Working with `I`
+
+For any given natural number `c ≡ 1 or 2 [MOD 3]`, we need to show that can derive an `miustr`
+`M::w` where `w` consists only of `I`s,  where `d = icount w` is a power of 2, where `d ≥ c` and
+where `d ≡ c [MOD 3]`.
+
+Given the above lemmas, the desired result reduces to an arithmetic result, given in the file
+`arithmetic.lean`.
+
+We'll use this result to show we can derive an `miustr` of the form `M::z` where `z` is an string
+consisting only of `I`s such that `icount z ≡ 1 or 2 [MOD 3]`.
+
+As an intermediate step, we show that derive `z` from `zt`, where `t` is aN `miustr` consisting of
+an even number of `U`s and `z` is any `miustr`.
 -/
 
-/-
-  We'll use this result to show we can derive a string of the form Mz where z is a string consisting only of 'I's such that icount z ≡ 1 or 2 (mod 3).
 
-  As an intermediate step, we show that derive z from zt, where t is a string consisting of an even number of 'U's and z is any string.
+/--
+As an intermediate result, we show we can remove `"UU"` from the end of a `derivable` `miustr` to
+produce another `derivable` `miustr`.
 -/
-
-/-
-  Before that, we prove that we can remove "UU" from the end of a derivable string to produce another derivable string.
--/
-
-
 lemma removeUUat_end (z : miustr) (h : derivable (z ++ [U,U])) :
   derivable z :=
 begin
@@ -103,10 +102,14 @@ begin
   split; simp,
 end
 
+/--
+Consequently, any number of successive occurrences of `"UU"` can be removed from the end
+of an `miustr`.
+-/
 lemma remove_UUs (z : miustr) (m : ℕ) (h : derivable (z ++ repeat U (m*2)))
   : derivable z :=
 begin
-  induction m with k hk, { /- base case for induction on m -/
+  induction m with k hk, { /- base case for induction on `m` -/
     revert h,
     simp [list.repeat],
   }, { /- inductive step -/
@@ -117,9 +120,11 @@ begin
   }
 end
 
-/- An important auxliary result: -/
-
-lemma three_i_to_one_u {cs ds : miustr} (h : derivable (cs ++ [I,I,I] ++ ds))  : derivable (cs ++ [U] ++ ds) :=
+/--
+`three_i_to_one_u` is simply a practical restatement of rule 3.
+-/
+lemma three_i_to_one_u {cs ds : miustr} (h : derivable (cs ++ [I,I,I] ++ ds))  :
+  derivable (cs ++ [U] ++ ds) :=
 begin
   apply derivable.r3,
   exact h,
@@ -128,8 +133,9 @@ begin
 end
 
 
-/- 
-  In application of the following lemma, xs will either be [] or [U].
+/--
+We may replace several consecutive occurrences of  `"III"` with the same number of `"U"`s.
+In application of the following lemma, `xs` will either be `[]` or `[U]`.
 -/
 lemma i_to_u (c k : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2)
   (xs : miustr) (hder : derivable (M ::(repeat I (c+3*k)) ++ xs)) :
@@ -142,17 +148,14 @@ begin
     intro xs,
     specialize ha ([U]++xs),
     have h₃ : repeat U a ++ [U] = repeat U (a.succ),
-    calc repeat U a ++ [U] = repeat U a ++ repeat U 1 : rfl
-                       ... = repeat U (a + 1) : by simp [repeat_add],
-    have h₄ : M ::(repeat I c ++ repeat U a) ++ ([U] ++ xs) = M:: repeat I c ++ (repeat U a ++ [U]) ++ xs,
+      {change [U] with repeat U 1, rw ←repeat_add,} ,
+    have h₄ : M ::(repeat I c ++ repeat U a) ++ ([U] ++ xs) =
+    M:: repeat I c ++ (repeat U a ++ [U]) ++ xs,
       simp,
     rw [h₄,h₃,←append_assoc] at ha,
     intro h,
     have h₂ : M:: repeat I (c + 3*a.succ) = M :: repeat I (c + 3*a) ++ [I,I,I] ,
-      calc M:: repeat I (c + 3*a.succ)  
-         = M :: repeat I (c + 3*a + 3) : by simp [mul_succ,add_assoc]
-     ... = M :: repeat I (c + 3*a) ++ repeat I 3 : by simp [repeat_add]
-     ... = M :: repeat I (c + 3*a) ++ [I,I,I]: rfl,
+      simp [mul_succ,add_assoc,repeat_add],
     rw h₂ at h,
     have : derivable (M:: repeat I (c + 3*a) ++ [U] ++ xs), 
       exact three_i_to_one_u h,
@@ -161,7 +164,7 @@ begin
 end
 
 
-/- Heavy use of library_search helped with the following proof :) -/
+/- A simple arithmetic result-/
 lemma add_mod2 (a : ℕ) : ∃ t, a + a % 2 = t*2 :=
 begin 
   suffices :  ∃ t, a + a % 2 = 2*t, {
@@ -178,7 +181,7 @@ end
 /- lemma i_freedom is significant. It shows we can derive My where y is any string consisiting just of 'I's, where icount y is 1 or 2 modulo 3. We start with a small result needed in the larger result
 -/
 
-lemma rep_pow_minus_append  (m : ℕ) : M:: repeat I (2^m -1) ++ [I]= M::(repeat I (2^m)) :=
+lemma rep_pow_minus_append  (m : ℕ) : M:: repeat I (2^m - 1) ++ [I] = M::(repeat I (2^m)) :=
 begin
   calc
     M:: repeat I (2^m-1) ++ [I] = M::repeat I (2^m-1) ++ repeat I 1 : by simp
@@ -290,7 +293,8 @@ begin
 end
 
 
-lemma icount_eq_length_of_ucount_zero_and_no_m {ys : miustr} (hu : ucount ys = 0) (hm : M ∉ ys) : icount ys = length ys :=
+lemma icount_eq_length_of_ucount_zero_and_no_m {ys : miustr} (hu : ucount ys = 0) (hm : M ∉ ys) :
+  icount ys = length ys :=
 begin
   induction ys with x xs hxs, {
     simp [icount],
@@ -375,7 +379,8 @@ begin
   }
 end
 
-lemma split_at_first_U {k : ℕ} {ys : miustr} (hm : goodm ys) (h : ucount ys = succ k) : ∃ (as bs : miustr), (ys = M:: as ++ [U] ++ bs) :=
+lemma split_at_first_U {k : ℕ} {ys : miustr} (hm : goodm ys) (h : ucount ys = succ k) :
+∃ (as bs : miustr), (ys = M:: as ++ [U] ++ bs) :=
 begin
   rcases hm with ⟨xs, hm, _⟩,
   rw hm,
@@ -389,7 +394,8 @@ end
 
 /- The next result is the inductive step of our main theorem.-/
 lemma ind_hyp_suf (k : ℕ) (ys : miustr) (hu : ucount ys = succ k) (hdec : decstr ys) :
-∃ (as bs : miustr), (ys = M::as ++ [U] ++ bs) ∧ (ucount (M::as ++ [I,I,I] ++ bs) = k) ∧ decstr (M::as ++ [I,I,I] ++ bs) :=
+∃ (as bs : miustr), (ys = M::as ++ [U] ++ bs) ∧ (ucount (M::as ++ [I,I,I] ++ bs) = k) ∧
+  decstr (M::as ++ [I,I,I] ++ bs) :=
 begin
 /-   cases hdec with hm hic,
   rcases hm with ⟨xs, hm, hmne⟩, -/
@@ -443,17 +449,20 @@ end
 
 theorem dec_suff  (en : miustr) (h : decstr en) : derivable en :=
 begin
-/- The next three lines have the effect of introducing ucount en as a variable that can be used for induction -/
-
+/- The next three lines have the effect of introducing `ucount en` as a variable that can be used
+ for induction -/
   have hu : ∃ n, ucount en = n, 
     simp,
   cases hu with n hu,
-  revert en, /- Crucially, we need the induction hypothesis to quantify over en -/
+  revert en, /- Crucially, we need the induction hypothesis to quantify over `en` -/
   induction n with k hk, {
     apply base_case_suf; assumption
   }, {
   intros ys hdec hus,
-  /- Idea: apply the induction hypothesis hk in the case where en is the string that arises by replacing the first 'U' in ys with three 'I's. We should be able to deduce decstr en, whence, by the induction hypothesis, derivable en. Applying three_i_to_one_u, we show derivable ys. -/
+  /- Idea: apply the induction hypothesis `hk` in the case where en is the string that arises by
+   replacing the first `U` in `ys` with three `I`s. We should be able to deduce `decstr en`,
+   whence, by the induction hypothesis, `derivable en`. Applying `three_i_to_one_u`,
+   we show `derivable ys`. -/
   rcases ind_hyp_suf k ys hus hdec with ⟨as,bs,hyab,habuc,hdecab⟩,
   have h₂ : derivable (M::as ++ [I,I,I] ++ bs) :=
     hk (M::as ++ [I,I,I] ++ bs) hdecab habuc,
