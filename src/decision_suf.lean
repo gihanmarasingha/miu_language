@@ -126,20 +126,17 @@ begin
     simp,
   }, {
     intro xs,
-    specialize ha ([U]++xs),
-    have h₃ : repeat U a ++ [U] = repeat U (a.succ),
-      {change [U] with repeat U 1, rw ←repeat_add,} ,
-    have h₄ : M ::(repeat I c ++ repeat U a) ++ ([U] ++ xs) =
-    M:: repeat I c ++ (repeat U a ++ [U]) ++ xs,
-      simp,
-    rw [h₄,h₃,←append_assoc] at ha,
-    intro h,
-    have h₂ : M:: repeat I (c + 3*a.succ) = M :: repeat I (c + 3*a) ++ [I,I,I] ,
-      simp [mul_succ,add_assoc,repeat_add],
-    rw h₂ at h,
-    have : derivable (M:: repeat I (c + 3*a) ++ [U] ++ xs), 
-      exact three_i_to_one_u h,
-    exact ha this,
+    specialize ha (U::xs),
+    intro h₂,
+    simp only [succ_eq_add_one,repeat_add], -- We massage the goal
+    rw [←append_assoc,←cons_append],        -- into a form amenable
+    change repeat U 1 with [U],             -- to the application of
+    rw [append_assoc,singleton_append],     -- ha.
+    apply ha,
+    apply derivable.r3,
+    change [I,I,I] with repeat I 3,
+    simp only [cons_append,←repeat_add],
+    convert h₂,
   }
 end
 
