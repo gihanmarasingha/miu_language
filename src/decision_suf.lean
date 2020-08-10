@@ -82,8 +82,8 @@ an even number of `U`s and `z` is any `miustr`.
 
 
 /--
-Any number of successive occurrences of `"UU"` can be removed from the end of a `derivable` `miustr` to
-produce another `derivable` `miustr`.
+Any number of successive occurrences of `"UU"` can be removed from the end of a `derivable` `miustr`
+to produce another `derivable` `miustr`.
 -/
 lemma remove_UUs (z : miustr) (m : ℕ) (h : derivable (z ++ repeat U (m*2)))
   : derivable z :=
@@ -100,16 +100,6 @@ begin
     revert h,
     simp,
   }
-end
-
-/--
-`three_i_to_one_u` is simply a practical restatement of rule 3.
--/
-lemma three_i_to_one_u {cs ds : miustr} (h : derivable (cs ++ [I,I,I] ++ ds))  :
-  derivable (cs ++ [U] ++ ds) :=
-begin
-  simp [singleton_append],
-  exact derivable.r3 h,
 end
 
 
@@ -360,11 +350,11 @@ end
 
 
 lemma split_at_first_U {k : ℕ} {ys : miustr} (hm : goodm ys) (h : ucount ys = succ k) :
-∃ (as bs : miustr), (ys = M:: as ++ [U] ++ bs) :=
+∃ (as bs : miustr), (ys = M:: as ++ U :: bs) :=
 begin
   rcases hm with ⟨xs, hm, _⟩,
   rw hm,
-  simp [cons_inj], -- it suffices to prove `xs = as ++ [U] ++ bs`
+  simp [cons_inj], -- it suffices to prove `xs = as ++ U :: bs`
   have : ucount ys = ucount xs,
     rw [hm,ucount],
   rw this at h,
@@ -376,22 +366,22 @@ end
 `ind_hyp_suf` is the inductive step of our main theorem.
  -/
 lemma ind_hyp_suf (k : ℕ) (ys : miustr) (hu : ucount ys = succ k) (hdec : decstr ys) :
-∃ (as bs : miustr), (ys = M::as ++ [U] ++ bs) ∧ (ucount (M::as ++ [I,I,I] ++ bs) = k) ∧
+∃ (as bs : miustr), (ys = M::as ++ U:: bs) ∧ (ucount (M::as ++ [I,I,I] ++ bs) = k) ∧
   decstr (M::as ++ [I,I,I] ++ bs) :=
 begin
   rcases hdec with ⟨hm,hic⟩,
-  rcases split_at_first_U  hm hu with ⟨as,bs,hab⟩,
+  rcases split_at_first_U hm hu with ⟨as,bs,hab⟩,
   use as, use bs,
   split,
     exact hab,
     split, -- show `ucount (M::as ++ [I,I,I] ++ bs) = k`
       rw hab at hu,
       rw [ucountappend,ucountappend] at *, simp [ucount] at *,
-      apply succ.inj, rw [←hu, (succ_add _ _).symm],
+      apply succ.inj, rw [←hu], simp only [succ_eq_add_one,add_comm,add_assoc], 
     rcases hm with ⟨zs,hzs,hmnze⟩,
-    rw hzs at hab, -- `M ::zs = M :: as ++ [U] ++ bs`
-    simp [cons_inj] at hab, -- `zs = as ++ [U] ++ bs`
-    rw hab at hmnze, -- `M ∉ as ++ [U] ++ bs`
+    rw hzs at hab, -- `M ::zs = M :: as ++ U :: bs`
+    simp [cons_inj] at hab, -- `zs = as ++ U :: bs`
+    rw hab at hmnze, -- `M ∉ as ++ U :: bs`
     simp [not_mem_append] at hmnze,
     push_neg at hmnze, -- we have `M ∉ as ∧ M ∉ bs`.
     -- split `decstr (M::as ++ [I,I,I] ++ bs)`
@@ -409,8 +399,9 @@ begin
       repeat {rw icountappend at *}, simp [icount] at *,
       ring,
     }
-
 end
+
+
 
 
 /--
@@ -432,7 +423,7 @@ begin
   have h₂ : derivable (M::as ++ [I,I,I] ++ bs) :=
     hk (M::as ++ [I,I,I] ++ bs) hdecab habuc,
   rw hyab,
-  exact three_i_to_one_u h₂,
+  exact derivable.r3 h₂,
 }
 end
 
