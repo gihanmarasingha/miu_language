@@ -82,24 +82,8 @@ an even number of `U`s and `z` is any `miustr`.
 
 
 /--
-As an intermediate result, we show we can remove `"UU"` from the end of a `derivable` `miustr` to
+Any number of successive occurrences of `"UU"` can be removed from the end of a `derivable` `miustr` to
 produce another `derivable` `miustr`.
--/
-lemma removeUUat_end (z : miustr) (h : derivable (z ++ [U,U])) :
-  derivable z :=
-begin
-  have : z ++ [U,U]  = z ++ [U,U] ++ [],
-    simp,
-  rw this at h,
-  have : z = z ++ [],
-    simp,
-  rw this,
-  exact derivable.r4 h,
-end
-
-/--
-Consequently, any number of successive occurrences of `"UU"` can be removed from the end
-of an `miustr`.
 -/
 lemma remove_UUs (z : miustr) (m : ℕ) (h : derivable (z ++ repeat U (m*2)))
   : derivable z :=
@@ -109,9 +93,12 @@ begin
     simp [list.repeat],
   }, { /- inductive step -/
     apply hk,
-    apply removeUUat_end,
+    simp only [succ_mul,repeat_add] at h,
+    change repeat U 2 with [U,U] at h,
+    rw ←(append_nil (z ++ repeat U (k*2) )),
+    apply derivable.r4,
     revert h,
-    simp [succ_mul,repeat_add],
+    simp,
   }
 end
 
