@@ -6,6 +6,7 @@ Authors: Gihan Marasingha
 import basic
 import data.nat.modeq
 import tactic.ring
+import tactic.push_neg
 
 /-!
 # Decision procedure - necessary condition
@@ -149,11 +150,26 @@ begin
   induction h,
     left,
     apply mod_def,
-  any_goals {apply inheritmod3 (icount h_st) _ h_ih},
-  apply nice_imod3rule1, assumption,
+  any_goals {apply inheritmod3 (icount _) _ _},
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  
+
+
+/-   apply nice_imod3rule1, assumption,
   apply nice_imod3rule2, assumption,
   apply nice_imod3rule3, assumption,
-  apply nice_imod3rule4, assumption,
+  apply nice_imod3rule4, assumption, -/
 end
 
 /--
@@ -196,91 +212,88 @@ We'll show, for each `i` from 1 to 4, that if `en` follows by rule `i` from `st`
 `goodm st` holds, then so does `goodm en`.
 -/
 
-lemma goodmrule1 (st en : miustr) (h₁ : rule1 st en) 
-  (h₂ : goodm st) : goodm en :=
-begin
-  rcases h₂ with ⟨ys, k₁, k₂⟩,
-  rw rule1 at h₁,
-  split,
-    swap,
-    exact (ys ++ [U]),
-  simp [h₁, k₁, k₂],
-end
-
-
-lemma goodmrule2 (st en : miustr) (h₁ : rule2 st en) 
-  (h₂ : goodm st) : goodm en :=
-begin
-  rw rule2 at h₁,
-  rcases h₁ with ⟨xs, hst, hen⟩,
-  rcases h₂ with ⟨ys, k₁, k₂⟩,
-  use (xs ++ xs),
-  rw hst at k₁,
-  cases k₁,
-  simp [k₂,hen],
-end
-
 
 open list
 
-lemma goodmrule3  (st en : miustr) (h₁ : rule3 st en) 
-  (h₂ : goodm st) : goodm en :=
+lemma goodmrule1 (xs : miustr) (h₁ : derivable (xs ++ [I])) (h₂ : goodm (xs ++ [I]))
+  : goodm (xs ++ [I,U]) :=
+begin
+  rcases h₂ with ⟨ys, k₁, k₂⟩,
+  use ys ++ [U],
+  split,
+    rw [←(cons_append _ _ _), ←k₁], simp,
+  simp [k₂],
+end
+
+
+lemma goodmrule2 (xs : miustr) (h₁ : derivable (M :: xs)) 
+  (h₂ : goodm (M :: xs)) : goodm (M :: xs ++ xs) :=
+begin
+  rcases h₂ with ⟨ys, k₁, k₂⟩,
+  use (ys ++ ys),
+  split,
+    rw (cons_inj _).mp k₁,
+    refl,
+  simp [k₂],
+end
+
+
+lemma goodmrule3  (as bs : miustr) (h₁ : derivable (as ++ [I,I,I] ++ bs)) 
+  (h₂ : goodm (as ++ [I,I,I] ++ bs)) : goodm (as ++ U :: bs) :=
 begin
   rcases h₂ with ⟨ys, p₁, p₂⟩,
-  rcases h₁ with ⟨as,bs,⟨hst,hen⟩⟩,
-  rw p₁ at hst,
+  change as ++ [I,I,I] ++ bs with (as ++ [I,I,I]) ++ bs at p₁,
   have h : ∃ zs, as = M :: zs,
     induction as with x xs hxs, { -- base case
       exfalso, 
-      have : M = I,
-        rw head_eq_of_cons_eq hst,
+      have : I = M,
+        exact head_eq_of_cons_eq p₁,
       contradiction,
-    }, { -- induction step
+    }, {
       use xs,
-      have : M = x,
-        rw head_eq_of_cons_eq hst,
-      rw ←this,
+      rw head_eq_of_cons_eq p₁,
     },
   cases h with zs h,
   use (zs++[U]++bs),
   split, {
-    simp [hen,h],
+    simp [h],
   }, {
-    simp [h,cons_inj] at hst,
-    revert p₂,
-    simp [hst],
-  }
+    rw h at p₁,
+    rw ←((cons_inj M).mp p₁) at p₂,
+    simp [append_eq_has_append] at p₂,
+    simp [mem_append] at *,
+    exact p₂,
+  },
 end
 
 
 -- The proof of the next lemma is very similar to the previous proof!
 
-lemma goodmrule4 (st en : miustr) (h₁ : rule4 st en) 
-  (h₂ : goodm st) : goodm en :=
+lemma goodmrule4  (as bs : miustr) (h₁ : derivable (as ++ [U,U] ++ bs)) 
+  (h₂ : goodm (as ++ [U,U] ++ bs)) : goodm (as ++ bs) :=
 begin
   rcases h₂ with ⟨ys, p₁, p₂⟩,
-  rcases h₁ with ⟨as,bs,⟨hst,hen⟩⟩,
-  rw p₁ at hst,
+  change as ++ [U,U] ++ bs with (as ++ [U,U]) ++ bs at p₁,
   have h : ∃ zs, as = M :: zs,
     induction as with x xs hxs, { -- base case
       exfalso, 
-      have : M = U,
-        rw head_eq_of_cons_eq hst,
+      have : U = M,
+        exact head_eq_of_cons_eq p₁,
       contradiction,
     }, {
       use xs,
-      have : M = x,
-        rw head_eq_of_cons_eq hst,
-      rw ←this,
+      rw head_eq_of_cons_eq p₁,
     },
   cases h with zs h,
   use (zs++bs),
   split, {
-    simp [hen,h],
+    rw h, refl,
   }, {
-    simp [h,cons_inj] at hst,
-    revert p₂,
-    simp [hst],
+    rw h at p₁,
+    rw ←((cons_inj M).mp p₁) at p₂,
+    simp [append_eq_has_append] at p₂,
+    simp [mem_append] at *,
+    exact p₂,
   }
 end
 
@@ -288,6 +301,8 @@ end
 /--
 Any derivable string must begin with `M` and contain no `M` in its tail.
 -/
+
+
 theorem goodmder (en : miustr): derivable en → 
   goodm en:= 
 begin
