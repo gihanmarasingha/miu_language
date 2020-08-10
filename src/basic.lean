@@ -136,20 +136,22 @@ Rule 2:  Mx → Mxx
 Rule 3:  xIIIy → xUy
 Rule 4:  xUUy → xy
 
+For pedagogical purposes, we give definitons for the rules independently of the notion of
+derivability. We do not need these defintions to prove our main results. 
 -/
 
 
-def rule1 (st : miustr) (en : miustr) : Prop :=
+private def rule1 (st : miustr) (en : miustr) : Prop :=
   (∃ xs : miustr, st = xs ++ [I]) ∧ en = st ++ [U]
 
-def rule2 (st : miustr) (en : miustr) : Prop :=
+private def rule2 (st : miustr) (en : miustr) : Prop :=
   ∃ xs : miustr, (st = M::xs) ∧ (en = M::(xs ++ xs))
 
-def rule3 (st : miustr) (en : miustr) : Prop :=
+private def rule3 (st : miustr) (en : miustr) : Prop :=
   ∃ (as bs : miustr),  st = as ++ [I,I,I] ++ bs  ∧
   en = as ++ [U] ++ bs
 
-def rule4 (st : miustr) (en : miustr) : Prop :=
+private def rule4 (st : miustr) (en : miustr) : Prop :=
   ∃ (as bs : miustr),   st = as ++ [U,U] ++ bs  ∧
   en = as ++ bs
 
