@@ -206,51 +206,42 @@ rules `rule1`, `rule2`, `rule3`, `rule4`, respectively.
 -/
 inductive derivable : miustr → Prop
 | mk : derivable "MI"
-| r1 {st en} : derivable st → rule1 st en → derivable en
-| r2 {st en} : derivable st → rule2 st en → derivable en
-| r3 {st en} : derivable st → rule3 st en → derivable en
-| r4 {st en} : derivable st → rule4 st en → derivable en
+| r1 {x} : derivable (x ++ [I]) → derivable (x ++ [I, U])
+| r2 {x} : derivable (M :: x) → derivable (M :: x ++ x)
+| r3 {x y} : derivable (x ++ [I, I, I] ++ y) → derivable (x ++ U :: y)
+| r4 {x y} : derivable (x ++ [U, U] ++ y) → derivable (x ++ y)
 
 
 /-!
 ### Derivability examples
 -/
 
-private lemma MIU_der : derivable "MIU" :=
+
+
+private lemma MIU_der : derivable "MIU":=
 begin
-  apply derivable.r1, -- We'll show `"MIU"` is derivable from another string by rule 1
-    constructor, -- `"MI"` is derivable, by the first constructor of `miustr`
-  exact MIUfromMI, -- We've proved `rule1 "MI" "MIU"`
+  change ("MIU" :miustr) with [M] ++ [I,U],
+  apply derivable.r1, -- "e reduce to deriving "MI",
+  constructor, -- which is the base of the inductive construction.
 end
 
 example : derivable "MIUIU" :=
 begin
-  apply derivable.r2, -- We'll show `"MIUIU"` can be derived if `"MIU"` can.
-    exact MIU_der, -- We've proved that `"MIU"` can be derived.
-    use "IU", -- Taking `xs = "IU"`, we'll show `"MIU" = M::xs` and `"MIUIU" = M :: (xs ++ xs)`
-    split; -- Split the conjuction
-      refl, -- and observe that the remaining goals are trivial.
+  change ("MIUIU" : miustr) with M :: [I,U] ++ [I,U],
+  exact derivable.r2 MIU_der, -- `"MIUIU"` can be derived as `"MIU"` can.
 end
 
 -- We give a forward derivation for the next proof
 example : derivable "MUI" :=
 begin
-  have h₁ : derivable "MI",
-    exact derivable.mk, -- the axiom
   have h₂ : derivable "MII",
-    apply derivable.r2,
-      exact h₁, -- recall the axiom
-      use "I", -- Taking `xs = "I"`, we'll show `"MI" = M::xs` and `"MII" = M::(xs++xs)`
-      split; refl,
+    change ("MII" : miustr) with M :: [I] ++ [I],
+    exact derivable.r2 derivable.mk,
   have h₃ : derivable "MIIII",
-    apply derivable.r2,
-      exact h₂, -- the derivability of `"MII"`
-      use "II", split; refl, -- much as in the proof of h₂
-  apply derivable.r3, -- We prove our main goal using rule 3
-    exact h₃, -- based on the derivability of `"MIIII"`,
-    use "M", -- with `as = "M"` and `bs = "I"`, we have `"MIII" = as ++ "III" + bs`
-    use "I", -- and `"MUI" = as ++ "U" ++ bs`
-    split; refl,
+    change ("MIIII" : miustr) with M :: [I,I] ++ [I,I],
+    exact derivable.r2 h₂,
+  change ("MUI" : miustr) with [M] ++ U :: [I],
+  exact derivable.r3 h₃, -- We prove our main goal using rule 3
 end
 
 end miu
