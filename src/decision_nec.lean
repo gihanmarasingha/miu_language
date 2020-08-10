@@ -6,7 +6,6 @@ Authors: Gihan Marasingha
 import basic
 import data.nat.modeq
 import tactic.ring
-import tactic.push_neg
 
 /-!
 # Decision procedure - necessary condition

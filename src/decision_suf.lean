@@ -39,8 +39,6 @@ To avoid this, we apply Rule 1 to `z` in this case, prior to removing triples of
 By applying Rule 1, we add an additional `U` so the final number of `U`s will be even.
 -/
 
-
-
 namespace miu
 
 open miu_atom
@@ -56,19 +54,13 @@ begin
   induction n with k hk, {
     constructor, /- base case -/
   }, { /- Start of induction step -/
-    apply derivable.r2, { /- We'll use `rule 2` -/
-      exact hk, /- `hk : M` followed by `2^k` `I`s is derivable -/
-    }, {
-      constructor, /- decompose `∃` -/
-      have : repeat I (2^k) ++ repeat I (2^k) = repeat I ((2^k)*2),
-        simp [repeat_add, mul_two],
-      rw this, /- Replace two identical `I` strings with one twice as long -/
-      split; 
-        refl,
-    }
+    have : repeat I (2^k.succ) = repeat I (2^k) ++ repeat I (2^k),
+    calc repeat I (2^k.succ) = repeat I (2^k*2) : by congr' 1
+                         ... = repeat I (2^k) ++ repeat I (2^k) : by simp [repeat_add,mul_two],
+    rw this,                      
+    exact derivable.r2 hk,
   }
 end
-
 
 
 /-!
@@ -96,10 +88,13 @@ produce another `derivable` `miustr`.
 lemma removeUUat_end (z : miustr) (h : derivable (z ++ [U,U])) :
   derivable z :=
 begin
-  apply derivable.r4,
-  exact h,
-  use z, use ([] : miustr),
-  split; simp,
+  have : z ++ [U,U]  = z ++ [U,U] ++ [],
+    simp,
+  rw this at h,
+  have : z = z ++ [],
+    simp,
+  rw this,
+  exact derivable.r4 h,
 end
 
 /--
@@ -126,10 +121,8 @@ end
 lemma three_i_to_one_u {cs ds : miustr} (h : derivable (cs ++ [I,I,I] ++ ds))  :
   derivable (cs ++ [U] ++ ds) :=
 begin
-  apply derivable.r3,
-  exact h,
-    use cs, use ds,
-    split; simp,
+  simp [singleton_append],
+  exact derivable.r3 h,
 end
 
 
@@ -179,15 +172,13 @@ begin
 end
 
 
-lemma rep_pow_minus_append  (m : ℕ) : M:: repeat I (2^m - 1) ++ [I] = M::(repeat I (2^m)) :=
+lemma rep_pow_minus_append  {m : ℕ} : M:: repeat I (2^m - 1) ++ [I] = M::(repeat I (2^m)) :=
 begin
   calc
     M:: repeat I (2^m-1) ++ [I] = M::repeat I (2^m-1) ++ repeat I 1 : by simp
                         ... = M::repeat I ( (2^m-1) + 1) : by simp [repeat_add]
                         ... = M::repeat I (2^m) : by rw nat.sub_add_cancel (one_le_pow' m 1)
 end
-
-
 
 /--
 `der_rep_I_of_mod3` states that `M::y` is `derivable` if `y` is any `miustr` consisiting just of
@@ -208,11 +199,11 @@ begin
       rw h_zero,  /- Case where `(2^m - c)/3 ≡ 0 [MOD 2]`-/
       simp [hw] }, 
       rw h_one,  /- Case where `(2^m - c)/3 ≡ 1 [MOD 2]`-/
+      rw [←rep_pow_minus_append, append_assoc],
+      change [I] ++ repeat U 1 with [I,U],
       apply derivable.r1,
+      rw rep_pow_minus_append,
       exact hw,
-      simp [rule1], 
-      rw ←rep_pow_minus_append,
-      use (M:: repeat I (2^m-1)), /- Finished proof of `hw₂` -/
   have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++ repeat U ((2^m-c)/3 % 2)),
     apply i_to_u c ((2^m-c)/3),
       exact h, /- `c` is 1 or 2 (mod 3) -/
