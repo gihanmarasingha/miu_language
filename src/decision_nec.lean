@@ -74,52 +74,13 @@ end
 
 /-  We show the icount, mod 3, stays the same or is multiplied by 2 under the rules of inference -/
 
-
-lemma nice_imod3rule1 (st en : miustr) (h : rule1 st en) :
-  nice_imod3 st en :=
-begin
-  left, -- Rule 1 should not affect the number of 'I's.
-  rw rule1 at h,
-  simp [h,nice_imod3,icountappend],
-  refl,
-end
-
-lemma nice_imod3rule2  (st en : miustr) (h : rule2 st en) :
-  nice_imod3 st en :=
-begin
-  right,
-  rcases h with ⟨xs, h1, h2⟩,
-  simp [h1,h2,icount,icountappend],
-  ring,
-end
-
-lemma nice_imod3rule3 (st en : miustr) (h : rule3 st en):
-  nice_imod3 st en :=
-begin
-  left,
-  rcases h with ⟨as,bs,⟨hst,hen⟩⟩,
-  rw [hst,hen],
-  simp [icountappend,icount,refl],
-  ring,
-end
-
-lemma nice_imod3rule4 (st en : miustr) (h : rule4 st en):
-  nice_imod3 st en :=
-begin
-  left,
-  rcases h with ⟨as,bs,⟨hst,hen⟩⟩,
-  rw [hst,hen],
-  simp [icountappend,icount,refl],
-end
-
-
 open nat
 
 /- Now we show that the icount of a derivable string is 1 or 2 modulo 3-/
 
 -- We start with a general result about natural numbers.
 
-lemma inheritmod3 (a b : ℕ) (h1 : a % 3 = 1 ∨ a % 3 = 2)
+lemma inheritmod3 {a b : ℕ} (h1 : a % 3 = 1 ∨ a % 3 = 2)
   (h2 : b % 3 = a % 3 ∨  b % 3 = (2 * a % 3)) :
     b % 3 = 1 ∨ b % 3 = 2 :=
 begin
@@ -150,26 +111,11 @@ begin
   induction h,
     left,
     apply mod_def,
-  any_goals {apply inheritmod3 (icount _) _ _},
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  
-
-
-/-   apply nice_imod3rule1, assumption,
-  apply nice_imod3rule2, assumption,
-  apply nice_imod3rule3, assumption,
-  apply nice_imod3rule4, assumption, -/
+    any_goals {apply inheritmod3 h_ih},
+      left, simp only [icountappend], refl,
+      right, simp only [icount,icountappend],ring,
+      left, simp [icountappend,icount,refl], ring,
+      left, simp [icountappend,icount,refl],
 end
 
 /--
