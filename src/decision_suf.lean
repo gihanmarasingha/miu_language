@@ -56,7 +56,7 @@ begin
   }, { /- Start of induction step -/
     have : repeat I (2^k.succ) = repeat I (2^k) ++ repeat I (2^k),
     calc repeat I (2^k.succ) = repeat I (2^k*2) : by congr' 1
-                         ... = repeat I (2^k) ++ repeat I (2^k) : by simp [repeat_add,mul_two],
+                         ... = repeat I (2^k) ++ repeat I (2^k) : by simp only [repeat_add,mul_two],
     rw this,                      
     exact derivable.r2 hk,
   }
@@ -80,27 +80,32 @@ As an intermediate step, we show that derive `z` from `zt`, where `t` is aN `miu
 an even number of `U`s and `z` is any `miustr`.
 -/
 
-
 /--
 Any number of successive occurrences of `"UU"` can be removed from the end of a `derivable` `miustr`
 to produce another `derivable` `miustr`.
 -/
-lemma remove_UUs (z : miustr) (m : ℕ) (h : derivable (z ++ repeat U (m*2)))
+lemma remove_UUs {z : miustr} {m : ℕ} (h : derivable (z ++ repeat U (m*2)))
   : derivable z :=
 begin
   induction m with k hk, { /- base case for induction on `m` -/
     revert h,
-    simp [list.repeat],
+    simp only [list.repeat,zero_mul,append_nil, imp_self], -- or simp by itself!
   }, { /- inductive step -/
     apply hk,
     simp only [succ_mul,repeat_add] at h,
     change repeat U 2 with [U,U] at h,
     rw ←(append_nil (z ++ repeat U (k*2) )),
     apply derivable.r4,
-    revert h,
-    simp,
+    simp only [append_nil,append_assoc,h],
   }
 end
+
+
+/-!
+The following option is incredibly useful for determining which lemmas are used by simp.
+
+set_option trace.simplify.rewrite true
+-/
 
 
 /--
@@ -113,7 +118,7 @@ lemma i_to_u (c k : ℕ) (hc : c % 3 = 1 ∨ c % 3 = 2)
 begin
   revert xs,
   induction k with a ha, {
-    simp,
+    simp only [list.repeat,mul_zero,add_zero,append_nil, forall_true_iff,imp_self],
   }, {
     intro xs,
     specialize ha (U::xs),
@@ -134,25 +139,21 @@ end
 /- A simple arithmetic result-/
 lemma add_mod2 (a : ℕ) : ∃ t, a + a % 2 = t*2 :=
 begin 
-  suffices :  ∃ t, a + a % 2 = 2*t, {
-    cases this with t ht,
-    rw mul_comm at ht,
-    use t, exact ht
-  },
-  have : (a + a%2) % 2 = 0,
-    rw [add_mod,mod_mod,←two_mul,mul_mod_right],
-  apply dvd_of_mod_eq_zero,
-  rw this,
+  simp only [mul_comm _ 2], -- write `t*2` as `2*t`
+  apply dvd_of_mod_eq_zero, -- it suffices to prove `(a + a % 2) % 2 = 0`
+  rw [add_mod,mod_mod,←two_mul,mul_mod_right],
 end
+
 
 
 lemma rep_pow_minus_append  {m : ℕ} : M:: repeat I (2^m - 1) ++ [I] = M::(repeat I (2^m)) :=
 begin
   calc
-    M:: repeat I (2^m-1) ++ [I] = M::repeat I (2^m-1) ++ repeat I 1 : by simp
+    M:: repeat I (2^m-1) ++ [I] = M::repeat I (2^m-1) ++ repeat I 1 : by simp 
                         ... = M::repeat I ( (2^m-1) + 1) : by simp [repeat_add]
                         ... = M::repeat I (2^m) : by rw nat.sub_add_cancel (one_le_pow' m 1)
 end
+
 
 /--
 `der_rep_I_of_mod3` states that `M::y` is `derivable` if `y` is any `miustr` consisiting just of
@@ -161,39 +162,26 @@ end
 lemma der_rep_I_of_mod3 (c : ℕ) (h : c % 3 = 1 ∨ c % 3 = 2):
   derivable (M::(repeat I c)) :=
 begin
-  /- We start by showing that `miustr` `M::w` described in the introduction can be derived.
-  First derive `m`, where `2^m` is the number of `I`s in this string. -/
-  have hm : ∃ m : ℕ, c ≤ (2^m) ∧ (2^m) % 3 = c % 3
-    := mod12pow c h,
-  cases hm with m hm,
-  /- Now derive the `miustr` `M::w`. -/
-  have hw : derivable (M::(repeat I (2^m))) := pow2str m,
+  -- From pow2str, we can derive the `miustr` `M::w` described in the introduction.
+  cases (mod12pow c h) with m hm, -- `2^m` will be  the number of `I`s in the string `M::w`
   have hw₂ : derivable (M::(repeat I (2^m)) ++ repeat U ((2^m -c)/3 % 2)),
     cases mod_two_eq_zero_or_one ((2^m -c)/3) with h_zero h_one, {
-      rw h_zero,  /- Case where `(2^m - c)/3 ≡ 0 [MOD 2]`-/
-      simp [hw] }, 
-      rw h_one,  /- Case where `(2^m - c)/3 ≡ 1 [MOD 2]`-/
-      rw [←rep_pow_minus_append, append_assoc],
-      change [I] ++ repeat U 1 with [I,U],
+      simp only [pow2str m,append_nil,list.repeat,h_zero] }, -- case `(2^m - c)/3 ≡ 0 [MOD 2]`  
+      rw [h_one,←rep_pow_minus_append, append_assoc], -- case `(2^m - c)/3 ≡ 1 [MOD 2]`
       apply derivable.r1,
       rw rep_pow_minus_append,
-      exact hw,
+      exact (pow2str m),
   have hw₃ : derivable (M::(repeat I c) ++ repeat U ((2^m-c)/3) ++ repeat U ((2^m-c)/3 % 2)),
     apply i_to_u c ((2^m-c)/3),
       exact h, /- `c` is 1 or 2 (mod 3) -/
-      have : c + 3 * ((2^m-c)/3) = 2^m, {
-        rw nat.mul_div_cancel',
-        exact add_sub_of_le hm.1,
-        exact (modeq.modeq_iff_dvd' hm.1).mp hm.2.symm, },
-      rw this,
-      exact hw₂,
-  have : repeat U ((2^m-c)/3) ++ repeat U ((2^m-c)/3 % 2) = repeat U ((2^m-c)/3 + (2^m -c)/3  % 2),
-    simp [repeat_add],
-  simp [this] at hw₃,
+      convert hw₂, -- now we must show `c + 3 * ((2 ^ m - c) / 3) = 2 ^ m`
+      rw nat.mul_div_cancel',
+      exact add_sub_of_le hm.1,
+      exact (modeq.modeq_iff_dvd' hm.1).mp hm.2.symm,
+  rw [append_assoc, ←repeat_add _ _] at hw₃,
   cases add_mod2 ((2^m-c)/3) with t ht,
-  rw [ht,←cons_append] at hw₃,
-  revert hw₃,
-  apply remove_UUs,
+  rw ht at hw₃,
+  exact remove_UUs hw₃,
 end
 
 
@@ -212,9 +200,9 @@ lemma ucountappend (a b : miustr) :
   ucount (a ++ b) = ucount a + ucount b :=
 begin
   induction a with ha hax haxs,
-    simp [ucount],
+    simp only [ucount,nil_append,zero_add],
     cases ha;
-      simp [ucount, haxs, add_assoc],
+      simp only [ucount, haxs, add_assoc,cons_append],
 end
 
 
@@ -235,10 +223,10 @@ The `icount` of an `miustr` is at most its length.
 lemma icount_lt {ys : miustr} : icount ys ≤ length ys :=
 begin
   induction ys with x xs hxs, {
-    simp [icount],
+    simp only [icount,length],
   }, {
     cases x;
-      {simp [icount], linarith}
+      {simp only [icount,length], linarith}
   }
 end
 
@@ -249,8 +237,7 @@ lemma eq_of_icount_eq_length  {ys : miustr} (h : icount ys = length ys) :
   ys = repeat I (icount ys) :=
 begin
   induction ys with x xs hxs, {
-    rw icount,
-    simp,
+    simp only [icount,list.repeat],
   } , { 
     have : icount xs ≤ length xs := icount_lt,
     cases x, swap, { -- swap bring case `x = I` to the fore
@@ -278,10 +265,7 @@ begin
     simp [icount],
   }, {
     cases x, { /- case `x = M` gives a contradiction -/
-      exfalso,
-      have : M ∈ M::xs,
-        simp,
-      exact hm this,
+      exfalso, exact hm (mem_cons_self M xs),
     }, { /- case `x = I` -/
       rw [icount,length,add_comm],
       congr' 1,
