@@ -268,17 +268,13 @@ begin
       exfalso, exact hm (mem_cons_self M xs),
     }, { /- case `x = I` -/
       rw [icount,length,add_comm],
-      congr' 1,
-      apply hxs, {
-          rwa ucount at hu,
-      }, {
-        revert hm,
-        simp, 
-      }
+      rw succ_inj',
+      apply hxs,
+        { rwa ucount at hu },
+        exact not_mem_of_not_mem_cons hm,
     }, { /- case `x = U` gives a (different) contradiction -/
       exfalso,
-      rw ucount at hu,
-      linarith,
+      rw ucount at hu, linarith,
     },
   }
 end
@@ -296,19 +292,17 @@ begin
     rw [hys, hysr],
     exact der_rep_I_of_mod3  c hc,
   },
-  have hu0 : ucount ys = 0,
-    rw hys at hu, simp [ucount] at hu, exact hu,
-  have h₂ : icount ys = icount en,
-    rw hys, simp [icount],
-  have h₃ : icount ys = length ys,
-    exact icount_eq_length_of_ucount_zero_and_neg_mem hu0 hnm,
-  have h₄ : ys = repeat I (icount ys) :=
-    eq_of_icount_eq_length h₃,
-  rw h₂ at h₄, /- replace `icount ys` with `icount en` in `h₄` -/
-  rw h₄,
-  use (icount en),
-  cc,
+  simp only [ucount,hys] at hu, -- gives `ucount = 0`
+  use (icount ys),
+  split, {
+    apply eq_of_icount_eq_length,
+    exact icount_eq_length_of_ucount_zero_and_neg_mem hu hnm, -- show `icount ys = length ys`
+  },
+  rw hys at hi, -- replace `en` with `M::ys` in `hi`
+  simp only [icount] at hi,
+  exact hi,
 end
+
 
 /-!
 Before continuing to the proof of the induction step, we need other auxiliary results that
@@ -321,7 +315,7 @@ begin
   induction xs with z zs hzs, {
     exfalso, rw ucount at h, contradiction, -- base case
   }, { -- induction step
-    simp [eq_or_ne_mem_of_mem],
+    simp only [mem_cons_iff],
     cases z, repeat { -- deal equally with the cases `z = M` and `z = I`
       rw ucount at h,
       right,
@@ -338,13 +332,14 @@ lemma split_at_first_U {k : ℕ} {ys : miustr} (hm : goodm ys) (h : ucount ys = 
 begin
   rcases hm with ⟨xs, hm, _⟩,
   rw hm,
-  simp [cons_inj], -- it suffices to prove `xs = as ++ U :: bs`
+  simp only [cons_inj,cons_append], -- it suffices to prove `xs = as ++ U :: bs`
   have : ucount ys = ucount xs,
     rw [hm,ucount],
   rw this at h,
   apply mem_split,
   exact in_of_ucount_eq_succ h,
 end 
+
 
 /--
 `ind_hyp_suf` is the inductive step of our main theorem.
@@ -357,35 +352,32 @@ begin
   rcases split_at_first_U hm hu with ⟨as,bs,hab⟩,
   use as, use bs,
   split,
-    exact hab,
+    { exact hab, },
     split, -- show `ucount (M::as ++ [I,I,I] ++ bs) = k`
       rw hab at hu,
       rw [ucountappend,ucountappend] at *, simp [ucount] at *,
       apply succ.inj, rw [←hu], simp only [succ_eq_add_one,add_comm,add_assoc], 
     rcases hm with ⟨zs,hzs,hmnze⟩,
-    rw hzs at hab, -- `M ::zs = M :: as ++ U :: bs`
-    simp [cons_inj] at hab, -- `zs = as ++ U :: bs`
-    rw hab at hmnze, -- `M ∉ as ++ U :: bs`
-    simp [not_mem_append] at hmnze,
+    simp only [cons_inj,cons_append,hzs] at hab, -- `zs = as ++ U :: bs`
+    simp only [hab,mem_append,mem_cons_iff,false_or] at hmnze,
     push_neg at hmnze, -- we have `M ∉ as ∧ M ∉ bs`.
     -- split `decstr (M::as ++ [I,I,I] ++ bs)`
     split, { -- first split `goodm (M::as ++ [I,I,I] ++ bs)`
-      constructor, simp [cons_inj], constructor,
-      refl, -- now we prove `M ∉ as ++ [I,I,I] ++ bs`
+      constructor, simp [cons_inj],
+      split, 
+        refl, -- now we prove `M ∉ as ++ [I,I,I] ++ bs`
       apply not_mem_append, exact hmnze.left,
-      simp, exact hmnze.right,
+      simp only [mem_cons_iff,false_or], exact hmnze.right,
     }, { -- now demonstrate the `icount` is correct.
       rw hab at hzs, rw hzs at hic,
       suffices : icount (M::as ++ [I,I,I] ++ bs) = icount (M::as ++ [U]++bs) + 3, {
-        rw this, simp [hic],
+        rw this, simp only [hic,cons_append,nil_append,add_mod_right,append_assoc],
       }, 
       rw hzs at hu,
       repeat {rw icountappend at *}, simp [icount] at *,
-      ring,
+      norm_num, simp only [add_comm,add_assoc],
     }
 end
-
-
 
 
 /--
@@ -395,8 +387,26 @@ theorem der_of_decstr  (en : miustr) (h : decstr en) : derivable en :=
 begin
 /- The next three lines have the effect of introducing `ucount en` as a variable that can be used
  for induction -/
-  have hu : ∃ n, ucount en = n, 
-    simp,
+  have hu : ∃ n, ucount en = n := exists_eq',
+  cases hu with n hu,
+  revert en, /- Crucially, we need the induction hypothesis to quantify over `en` -/
+  induction n with k hk, {
+    apply base_case_suf; assumption
+  }, {
+  intros ys hdec hus,
+  rcases ind_hyp_suf k ys hus hdec with ⟨as,bs,hyab,habuc,hdecab⟩,
+  have h₂ : derivable (M::as ++ [I,I,I] ++ bs) :=
+    hk (M::as ++ [I,I,I] ++ bs) hdecab habuc,
+  rw hyab,
+  exact derivable.r3 h₂,
+}
+end
+
+example  (en : miustr) (h : decstr en) : derivable en :=
+begin
+/- The next three lines have the effect of introducing `ucount en` as a variable that can be used
+ for induction -/
+  have hu : ∃ n, ucount en = n := exists_eq',
   cases hu with n hu,
   revert en, /- Crucially, we need the induction hypothesis to quantify over `en` -/
   induction n with k hk, {
