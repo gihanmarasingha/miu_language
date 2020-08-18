@@ -1,63 +1,64 @@
 # An MIU Decision Procedure in Lean
 
-The [MIU formal system](https://en.wikipedia.org/wiki/MU_puzzle) was introduced by Douglas Hofstadter in the first chapter of his 1979 book, [Gödel, Escher, Bach](https://en.wikipedia.org/wiki/G%C3%B6del,_Escher,_Bach).
-The system is defined by four rules of inference, one axiom, and an alphabet of three symbols: `M`, `I`, and `U`.
+The [MIU formal system](https://en.wikipedia.org/wiki/MU_puzzle) was introduced by Douglas
+Hofstadter in the first chapter of his 1979 book,
+[Gödel, Escher, Bach](https://en.wikipedia.org/wiki/G%C3%B6del,_Escher,_Bach).
+The system is defined by four rules of inference, one axiom, and an alphabet of three symbols:
+`M`, `I`, and `U`.
 
-Hofstadter's central question is: can the string "MU" be derived?
+Hofstadter's central question is: can the string `"MU"` be derived?
 
-It transpires that there is a simple decision procedure for this system. A string is derivable if and only if it starts with "M", contains no other "M"s, and the number of "I"s in
-the string is congruent to 1 or 2 modulo 3.
+It transpires that there is a simple decision procedure for this system. A string is derivable if
+and only if it starts with `M`, contains no other `M`s, and the number of `I`s in the string is
+congruent to 1 or 2 modulo 3.
 
-This project uses the language of the [Lean interactive theorem prover](https://leanprover.github.io/) to express the MIU formal system. We prove that the condition given above 
-is both necessary and sufficient for a string to be derivable within MIU.
-
-This is my first proper Lean project (and my first proper Git repository). Comments and suggestions are welcome via Zulip chat.
+The principal aim of this project is to give a Lean proof that the derivability of a string is a
+decidable predicate.
 
 ## The MIU System
 
-An _atom_ is any one of `M`, `I` or `U`. A _string_ is a finite sequence of zero or more symbols. To simplify notation, we write a sequence `[I,U,U,M]`, for example, as `IUUM`.
+In Hofstadter's description, an _atom_ is any one of `M`, `I` or `U`. A _string_ is a finite
+sequence of zero or more symbols. To simplify notation, we write a sequence `[I,U,U,M]`,
+for example, as `IUUM`.
 
 The four rules of inference are:
 
-1. x`I` → x`IU`,
-2. `M`x → `M`xx,
-3. x`III`y → x`U`y,
-4. x`UU`y → xy,
+1. xI → xIU,
+2. Mx → Mxx,
+3. xIIIy → xUy,
+4. xUUy → xy,
 
 where the notation α → β is to be interpreted as 'if α is derivable, then β is derivable'.
 
-Additionally, we have an axiom
+Additionally, he has an axiom:
 
 * `MI` is derivable.
 
-In my implementation, the set of atoms and the set of derivable strings are both represented as inductive types. For the former, we have
+In Lean, it is natural to treat the rules of inference and the axiom on an equal footing via an
+inductive data type `derivable` designed so that `derviable x` represents the notion that the string
+`x` can be derived from the axiom by the rules of inference. The axiom is represented as a
+nonrecursive constructor for `derivable`. This mirrors the translation of Peano's axiom '0 is a
+natural number' into the nonrecursive constructor `zero` of the inductive type `nat`.
 
 ```lean
 inductive derivable : miustr → Prop
 | mk : derivable "MI"
-| r1 : ∀ st en : miustr, derivable st → rule1 st en → derivable en
-| r2 : ∀ st en : miustr, derivable st → rule2 st en → derivable en
-| r3 : ∀ st en : miustr, derivable st → rule3 st en → derivable en
-| r4 : ∀ st en : miustr, derivable st → rule4 st en → derivable en
+| r1 {x} : derivable (x ++ [I]) → derivable (x ++ [I, U])
+| r2 {x} : derivable (M :: x) → derivable (M :: x ++ x)
+| r3 {x y} : derivable (x ++ [I, I, I] ++ y) → derivable (x ++ U :: y)
+| r4 {x y} : derivable (x ++ [U, U] ++ y) → derivable (x ++ y)
 ```
 
-where each of `rule1`, ..., `rule4` is a definition corresponding to the rules of inference. For example,
+With the above definition, we can, for example, prove that `"UMIU"` is derivable, assuming `"UMI"` is derivable.
 ```lean
-def rule1 (st : miustr) (en : miustr) : Prop :=
-  (∃ xs, st = xs ++ [I]) ∧ en = st ++ [U]
+example (h : derivable "UMI") : derivable "UMIU" :=
+begin
+  change ("UMIU" : miustr) with [U,M] ++ [I,U],
+  exact derivable.r1 h, -- Rule 1
+end
 ```
 
-The necessary and sufficient condition for a string to be derivable is
-```lean
-def decstr (en : miustr) :=
-  goodm en ∧ ((icount en) % 3 = 1 ∨ (icount en) % 3 = 2)
-```
-where `goodm` has the definition
-```lean
-def goodm (xs : miustr) : Prop :=
-  ∃ ys : miustr, xs = (M::ys) ∧ ¬(M ∈ ys)
-```
+## References
 
-The main result, spread over two files, is `derivable en ↔ decstr en`.
-
-
+* Jeremy Avigad, Leonardo de Moura and Soonho Kong, [_Theorem Proving in Lean_](https://leanprover.github.io/theorem_proving_in_lean/).
+* Douglas R Hofstadter (1979). _Gödel, Escher, Bach: an eternal golden braid_, New York, Basic Books.
