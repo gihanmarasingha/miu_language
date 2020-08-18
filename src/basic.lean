@@ -14,50 +14,73 @@ Hofstadter in the first chapter of his 1979 book,
 The system is defined by four rules of inference, one axiom, and an alphabet of three symbols:
 `M`, `I`, and `U`.
 
-Hofstadter's central question is: can the string "MU" be derived?
+Hofstadter's central question is: can the string `"MU"` be derived?
 
 It transpires that there is a simple decision procedure for this system. A string is derivable if
-and only if it starts with `"M"`, contains no other `"M"`s, and the number of `"I"`s in the string
-is congruent to 1 or 2 modulo 3.
+and only if it starts with `M`, contains no other `M`s, and the number of `I`s in the string is
+congruent to 1 or 2 modulo 3.
+
+The principal aim of this project is to give a Lean proof that the derivability of a string is a
+decidable predicate.
 
 ## The MIU System
 
-An _atom_ is any one of `M`, `I` or `U`. A _string_ is a finite sequence of zero or more symbols.
-To simplify notation, we write a sequence `[I,U,U,M]`, for example, as `IUUM`.
+In Hofstadter's description, an _atom_ is any one of `M`, `I` or `U`. A _string_ is a finite
+sequence of zero or more symbols. To simplify notation, we write a sequence `[I,U,U,M]`,
+for example, as `IUUM`.
 
 The four rules of inference are:
 
-1. x`I` → x`IU`,
-2. `M`x → `M`xx,
-3. x`III`y → x`U`y,
-4. x`UU`y → xy,
+1. xI → xIU,
+2. Mx → Mxx,
+3. xIIIy → xUy,
+4. xUUy → xy,
 
 where the notation α → β is to be interpreted as 'if α is derivable, then β is derivable'.
 
-Additionally, we have an axiom
+Additionally, he has an axiom:
 
 * `MI` is derivable.
 
-In this file, the set of atoms and the set of derivable strings are represented as inductive types.
--/
+In Lean, it is natural to treat the rules of inference and the axiom on an equal footing via an
+inductive data type `derivable` designed so that `derviable x` represents the notion that the string
+`x` can be derived from the axiom by the rules of inference. The axiom is represented as a
+nonrecursive constructor for `derivable`. This mirrors the translation of Peano's axiom '0 is a
+natural number' into the nonrecursive constructor `zero` of the inductive type `nat`.
 
+## References
+
+* [Jeremy Avigad, Leonardo de Moura and Soonho Kong, _Theorem Proving in Lean_][avigad_moura_kong-2017]
+* [Douglas R Hofstadter, _Gödel, Escher, Bach_][Hofstadter-1979]
+
+## Tags
+
+miu, derivable strings
+
+-/
 
 namespace miu
 
 /-!
-### Basic data types
+### Declarations and instance derivations for `miu_atom` and `miustr`
 -/
 
 /--
-Each MIU string consists of either an `M`, `I`, or `U`. Such an elementary unit is called an
-`miu_atom`. We represent `miu_atom` as an enumerated type.
+The atoms of MIU can be represented as an enumerated type in Lean.
 -/
+@[derive decidable_eq]
 inductive miu_atom : Type
 | M : miu_atom
 | I : miu_atom
 | U : miu_atom
 
-open miu_atom 
+/-!
+The annotation `@[derive decidable_eq]` above assigns the attribute `derive` to `miu_atom`, through
+which Lean automatically derives that `miu_atom` is an instance of `decidable_eq`. The use of
+`derive` is crucial in this project and will lead to the automatic derivation of decidability.
+-/
+
+open miu_atom
 
 /--
 We show that the type `miu_atom` is inhabited, giving `M` (for no particular reason) as the default
@@ -67,35 +90,24 @@ instance miu_atom_inhabited : inhabited miu_atom :=
 inhabited.mk M
 
 /--
-A simple function from `miu_atom` to `string`.
+`miu_atom.repr` is the 'natural' function from `miu_atom` to `string`.
 -/
-def miu_atom.repr : miu_atom → string 
+def miu_atom.repr : miu_atom → string
 | M := "M"
 | I := "I"
 | U := "U"
 
 /--
-A representation of an `miu_atom`.
+Using `miu_atom.repr`, we prove that ``miu_atom` is an instance of `has_repr`.
 -/
 instance : has_repr miu_atom :=
 ⟨λ u, u.repr⟩
 
 /--
-For simplicity, an `miustr` is just a list of `miu_atom`.
+For simplicity, an `miustr` is just a list of elements of type `miu_atom`.
 -/
-def miustr := list miu_atom 
-
-/--
-We want to use list membership ...
--/
-instance : has_mem miu_atom miustr :=
-  ⟨list.mem⟩
-
-/--
-... and list append.
--/
-instance : has_append miustr :=
-⟨list.append⟩
+@[derive [has_append, has_mem miu_atom]]
+def miustr := list miu_atom
 
 /--
 For display purposes, an `miustr` can be represented as a `string`.
@@ -105,12 +117,12 @@ def miustr.mrepr : miustr → string
 | (c::cs) := c.repr ++ (miustr.mrepr cs)
 
 instance miurepr : has_repr miustr :=
-⟨λ u, u.mrepr⟩ 
+⟨λ u, u.mrepr⟩
 
 /--
-In the other direction, we set up coercion from `string` to `miustr`.
+In the other direction, we set up a coercion from `string` to `miustr`.
 -/
-def lchar_to_miustr : (list char) → miustr 
+def lchar_to_miustr : (list char) → miustr
 | [] := []
 | (c::cs) :=
   let ms := lchar_to_miustr cs in
@@ -124,87 +136,14 @@ def lchar_to_miustr : (list char) → miustr
 instance string_coe_miustr : has_coe string miustr :=
 ⟨λ st, lchar_to_miustr st.data ⟩
 
-
-
-/-!
-### The rules of inference
-
-There are four rules of inference for MIU.
-
-Rule 1:  xI → xIU
-Rule 2:  Mx → Mxx
-Rule 3:  xIIIy → xUy
-Rule 4:  xUUy → xy
-
-For pedagogical purposes, we give definitons for the rules independently of the notion of
-derivability. We do not need these defintions to prove our main results. 
--/
-
-
-private def rule1 (st : miustr) (en : miustr) : Prop :=
-  (∃ xs : miustr, st = xs ++ [I]) ∧ en = st ++ [U]
-
-private def rule2 (st : miustr) (en : miustr) : Prop :=
-  ∃ xs : miustr, (st = M::xs) ∧ (en = M::(xs ++ xs))
-
-private def rule3 (st : miustr) (en : miustr) : Prop :=
-  ∃ (as bs : miustr),  st = as ++ [I,I,I] ++ bs  ∧
-  en = as ++ [U] ++ bs
-
-private def rule4 (st : miustr) (en : miustr) : Prop :=
-  ∃ (as bs : miustr),   st = as ++ [U,U] ++ bs  ∧
-  en = as ++ bs
-
-
-/-!
-### Rule usage examples
--/
-
-private lemma MIUfromMI : rule1 "MI" "MIU" :=
-begin
-  split, { -- split into showing `"MI"` ends in `"I"` and that `"MIU" = "MI" ++ "U"`
-    use "M", -- We take `xs` for `"M"` in  `∃ xs : "MI" = xs ++ "I"`
-    refl, -- Now `"MI"` is 'definitionally' equal to `"M" ++ "I"`.
-  }, {
-  refl, -- Likewise, `"MIU"` is definintionally equal to `"MI" ++ "U"`
-  }
-end
-
-example : rule2 "MIIU" "MIIUIIU" :=
-begin
-  use "IIU", -- we'll show `"MIIU" = M::xs` and `"MIIUIIU" = M::(xs++xs)` with `xs = "IIU"`
-  split; -- split the conjuction into two subgoals
-    refl, -- each of which are trivially true.
-end
-
-example : rule3  "UIUMIIIMMM" "UIUMUMMM" :=
-begin
-  use "UIUM", -- With `as = "UIUM"` and `bs = "MMM"`, the first string is
-  use "MMM", -- `as ++ "III" ++ bs` and the second is `as ++ "U" ++ bs`
-  split; -- We prove the conjunction as in the previous proof.
-    refl,
-end
-
-example : rule4 "MIMIMUUIIM" "MIMIMIIM" :=
-begin
- use "MIMIM", -- With `as = "MIMIM"` and `bs = "IIM"`, the first string
- use "IIM", -- is `as ++ "UU" + bs` and the second is `as ++ bs`
- split;
-  refl,
-end
-
-
 /-!
 ### Derivability
-There is exactly one axiom of MIU, namely that `"MI"` is derivable. From this, and the rules of
-inference, we define a type `derivable` so that `derivable st` corresonds to the notion that
-the `miutr` st is derivable in MIU. We represent `derivable` as an inductive family.
 -/
 
 /--
-The inductive type derivable has five constructors. The default constructor corresponds to the
-axiom that `"MI"` is derivable. Each of the constructors `r1`, `r2`, `r3`, `r4` corresponds to the
-rules `rule1`, `rule2`, `rule3`, `rule4`, respectively.
+The inductive type `derivable` has five constructors. The nonrecursive constructor `mk` corresponds
+to Hofstadter's axiom that `"MI"` is derivable. Each of the constructors `r1`, `r2`, `r3`, `r4`
+corresponds to the one of Hofstadter's rules of inference.
 -/
 inductive derivable : miustr → Prop
 | mk : derivable "MI"
@@ -213,17 +152,42 @@ inductive derivable : miustr → Prop
 | r3 {x y} : derivable (x ++ [I, I, I] ++ y) → derivable (x ++ U :: y)
 | r4 {x y} : derivable (x ++ [U, U] ++ y) → derivable (x ++ y)
 
+/-!
+### Rule usage examples
+-/
+
+example (h : derivable "UMI") : derivable "UMIU" :=
+begin
+  change ("UMIU" : miustr) with [U,M] ++ [I,U],
+  exact derivable.r1 h, -- Rule 1
+end
+
+example (h : derivable "MIIU") : derivable "MIIUIIU" :=
+begin
+  change ("MIIUIIU" : miustr) with M :: [I,I,U] ++ [I,I,U],
+  exact derivable.r2 h, -- Rule 2
+end
+
+example (h : derivable "UIUMIIIMMM") : derivable "UIUMUMMM" :=
+begin
+  change ("UIUMUMMM" : miustr) with [U,I,U,M] ++ U :: [M,M,M],
+  exact derivable.r3 h, -- Rule 3
+end
+
+example (h : derivable "MIMIMUUIIM") : derivable "MIMIMIIM" :=
+begin
+  change ("MIMIMIIM" : miustr) with [M,I,M,I,M] ++ [I,I,M],
+  exact derivable.r4 h, -- Rule 4
+end
 
 /-!
 ### Derivability examples
 -/
 
-
-
 private lemma MIU_der : derivable "MIU":=
 begin
   change ("MIU" :miustr) with [M] ++ [I,U],
-  apply derivable.r1, -- "e reduce to deriving "MI",
+  apply derivable.r1, -- reduce to deriving "MI",
   constructor, -- which is the base of the inductive construction.
 end
 
@@ -233,15 +197,14 @@ begin
   exact derivable.r2 MIU_der, -- `"MIUIU"` can be derived as `"MIU"` can.
 end
 
--- We give a forward derivation for the next proof
 example : derivable "MUI" :=
 begin
   have h₂ : derivable "MII",
-    change ("MII" : miustr) with M :: [I] ++ [I],
-    exact derivable.r2 derivable.mk,
+  { change ("MII" : miustr) with M :: [I] ++ [I],
+    exact derivable.r2 derivable.mk, },
   have h₃ : derivable "MIIII",
-    change ("MIIII" : miustr) with M :: [I,I] ++ [I,I],
-    exact derivable.r2 h₂,
+  { change ("MIIII" : miustr) with M :: [I,I] ++ [I,I],
+    exact derivable.r2 h₂, },
   change ("MUI" : miustr) with [M] ++ U :: [I],
   exact derivable.r3 h₃, -- We prove our main goal using rule 3
 end
